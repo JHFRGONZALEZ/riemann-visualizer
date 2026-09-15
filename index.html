@@ -1,4 +1,358 @@
-1
-$ view public/riemann-single-file.html
-2
-{"status": "success", "file": {"path": "public/riemann-single-file.html", "content": "1: <!DOCTYPE html>\n2: <html lang=\"es\">\n3: <head>\n4: <meta charset=\"UTF-8\">\n5: <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n6: <title>Sumas de Riemann — Visualizador Interactivo</title>\n7: <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css\">\n8: <script defer src=\"https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js\"></script>\n9: <style>\n10: *{box-sizing:border-box;margin:0;padding:0}\n11: body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:#1a1a2e;color:#e2e8f0;min-height:100vh}\n12: ::-webkit-scrollbar{width:6px;height:6px}\n13: ::-webkit-scrollbar-track{background:#0f0f23}\n14: ::-webkit-scrollbar-thumb{background:#0f3460;border-radius:3px}\n15: ::-webkit-scrollbar-thumb:hover{background:#e94560}\n16: input[type=\"range\"]{-webkit-appearance:none;appearance:none;height:6px;background:#0f3460;border-radius:3px;outline:none}\n17: input[type=\"range\"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#e94560;cursor:pointer}\n18: select,input[type=\"number\"],input[type=\"text\"]{background:#0f3460;border:1px solid #1a4080;color:#e2e8f0;border-radius:6px;padding:8px 12px;font-size:14px;width:100%}\n19: select:focus,input:focus{outline:none;border-color:#e94560}\n20: button{cursor:pointer;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;transition:all .2s}\n21: .btn-primary{background:#e94560;color:white}\n22: .btn-primary:hover{background:#d63851}\n23: .btn-secondary{background:#0f3460;color:#e2e8f0}\n24: .btn-secondary:hover{background:#1a4080}\n25: .btn-accent{background:#a855f7;color:white}\n26: .btn-warning{background:#fbbf24;color:#000}\n27: header{background:#16213e;border-bottom:1px solid #0f3460;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}\n28: header h1{font-size:18px;color:#e94560;display:flex;align-items:center;gap:10px}\n29: .examples-bar{background:rgba(22,33,62,.5);padding:8px 20px;border-bottom:1px solid rgba(15,52,96,.5);display:flex;align-items:center;gap:12px;flex-wrap:wrap}\n30: .examples-bar span{color:#94a3b8;font-size:13px}\n31: .examples-bar button{padding:4px 12px;font-size:12px;background:#0f3460;color:#e2e8f0}\n32: .examples-bar button:hover{background:#e94560}\n33: .main-layout{display:flex;flex-wrap:wrap;min-height:calc(100vh - 110px)}\n34: aside{padding:16px;overflow-y:auto;max-height:calc(100vh - 110px)}\n35: aside.left{width:300px;background:rgba(22,33,62,.7);border-right:1px solid rgba(15,52,96,.5)}\n36: aside.right{width:420px;background:rgba(22,33,62,.7);border-left:1px solid rgba(15,52,96,.5)}\n37: main{flex:1;padding:16px;display:flex;flex-direction:column;gap:16px;min-width:0}\n38: .section{margin-bottom:16px}\n39: .section h3{font-size:13px;font-weight:700;color:#e94560;margin-bottom:8px;display:flex;align-items:center;gap:6px}\n40: .step-card{padding:12px;background:rgba(15,52,96,.3);border-radius:8px;margin-bottom:12px}\n41: .step-card h4{font-size:11px;font-weight:700;color:#93c5fd;margin-bottom:8px}\n42: .step-card p,.step-card div{font-size:13px;color:#cbd5e1;margin-bottom:4px}\n43: .step-card.highlight{border:1px solid rgba(251,191,36,.3)}\n44: .step-card.error{border:1px solid rgba(239,68,68,.3)}\n45: .step-card.formula{background:rgba(233,69,96,.1);border:1px solid rgba(233,69,96,.3)}\n46: .canvas-container{background:#0f0f23;border-radius:8px;border:1px solid #0f3460;overflow:hidden;position:relative}\n47: .canvas-container canvas{width:100%;display:block}\n48: .canvas-container .download-btn{position:absolute;top:8px;right:8px;padding:4px 10px;background:rgba(0,0,0,.6);color:white;font-size:11px;border-radius:4px;opacity:0;transition:opacity .2s}\n49: .canvas-container:hover .download-btn{opacity:1}\n50: .table-container{background:#0f0f23;border-radius:8px;border:1px solid #0f3460;padding:16px;overflow-x:auto}\n51: .table-container h3{font-size:13px;font-weight:700;color:#e94560;margin-bottom:12px}\n52: table{width:100%;font-size:11px;font-family:monospace;border-collapse:collapse}\n53: th{padding:6px 8px;text-align:left;border-bottom:1px solid #0f3460;color:#94a3b8;font-weight:600}\n54: td{padding:4px 8px;border-bottom:1px solid rgba(15,52,96,.3)}\n55: tr:hover{background:rgba(15,52,96,.2)}\n56: .radio-group{display:flex;flex-direction:column;gap:6px}\n57: .radio-group label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#cbd5e1}\n58: .radio-group label:hover{color:white}\n59: .radio-group input[type=\"radio\"]{accent-color:#e94560}\n60: .color-dot{width:12px;height:12px;border-radius:50%;display:inline-block}\n61: .actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}\n62: .actions-grid .full{grid-column:1/-1}\n63: .n-buttons{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}\n64: .n-buttons button{padding:4px 8px;font-size:11px}\n65: .n-buttons button.active{background:#e94560}\n66: .error-msg{margin-top:12px;padding:8px;background:rgba(127,29,29,.3);border:1px solid #b91c1c;border-radius:6px;font-size:12px;color:#fca5a5}\n67: .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}\n68: .modal{background:#16213e;border:1px solid #0f3460;border-radius:12px;max-width:800px;width:100%;max-height:80vh;overflow-y:auto;padding:24px}\n69: .modal h2{font-size:20px;color:#e94560;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}\n70: .modal h2 button{background:none;color:#94a3b8;font-size:20px;padding:0}\n71: .modal section{margin-bottom:20px}\n72: .modal section h3{font-weight:700;color:#93c5fd;margin-bottom:8px}\n73: .modal section p{color:#cbd5e1;font-size:14px;line-height:1.6}\n74: .modal .math-block{background:rgba(15,52,96,.5);padding:16px;border-radius:8px;text-align:center;margin:8px 0}\n75: .visit-counter{display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8}\n76: .visit-counter .dot{width:8px;height:8px;border-radius:50%;background:#22c55e}\n77: .checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}\n78: .checkbox-row input{accent-color:#e94560}\n79: .checkbox-row label{font-size:12px;color:#94a3b8}\n80: .fn-display{padding:8px;background:rgba(15,52,96,.5);border-radius:6px;text-align:center;margin-top:8px}\n81: @media(max-width:1024px){\n82:   aside.left,aside.right{width:100%;max-height:none;border:none;border-bottom:1px solid rgba(15,52,96,.5)}\n83:   .main-layout{flex-direction:column}\n84: }\n85: </style>\n86: </head>\n87: <body>\n88: \n89: <header>\n90:   <h1><span style=\"font-size:24px\">∫</span> Sumas de Riemann — Visualizador Interactivo</h1>\n91:   <div style=\"display:flex;align-items:center;gap:12px\">\n92:     <div class=\"visit-counter\">\n93:       <span class=\"dot\"></span>\n94:       <span id=\"visitCount\" style=\"font-family:monospace\">...</span>\n95:       <span style=\"color:#64748b\">visitas</span>\n96:     </div>\n97:     <button class=\"btn-secondary\" onclick=\"toggleHelp()\">🎓 ¿Cómo funciona?</button>\n98:   </div>\n99: </header>\n100: \n101: <div class=\"examples-bar\">\n102:   <span>Ejemplos:</span>\n103:   <button onclick=\"loadExample(1)\">x² en [0,2]</button>\n104:   <button onclick=\"loadExample(2)\">sin(x) en [0,π]</button>\n105:   <button onclick=\"loadExample(3)\">eˣ en [0,1]</button>\n106: </div>\n107: \n108: <div class=\"main-layout\">\n109:   <!-- PANEL IZQUIERDO -->\n110:   <aside class=\"left\">\n111:     <div class=\"section\">\n112:       <h3>📐 Función</h3>\n113:       <select id=\"fnSelect\" onchange=\"changeFunction()\">\n114:         <option value=\"x2\">f(x) = x²</option>\n115:         <option value=\"x3-x\">f(x) = x³ - x</option>\n116:         <option value=\"sin\">f(x) = sin(x)</option>\n117:         <option value=\"exp\">f(x) = eˣ</option>\n118:         <option value=\"sqrt\">f(x) = √x</option>\n119:         <option value=\"1/x\">f(x) = 1/x</option>\n120:       </select>\n121:       <div class=\"checkbox-row\" style=\"margin-top:8px\">\n122:         <input type=\"checkbox\" id=\"useCustom\" onchange=\"toggleCustom()\">\n123:         <label for=\"useCustom\">Función personalizada</label>\n124:       </div>\n125:       <input type=\"text\" id=\"customFn\" placeholder=\"Ej: x^2 + sin(x)\" style=\"display:none\" oninput=\"recalculate()\">\n126:       <div class=\"fn-display\" id=\"fnDisplay\"></div>\n127:     </div>\n128: \n129:     <div class=\"section\">\n130:       <h3>📏 Límites de Integración</h3>\n131:       <div style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px\">\n132:         <div>\n133:           <label style=\"font-size:11px;color:#94a3b8\">a (inferior)</label>\n134:           <input type=\"number\" id=\"inputA\" value=\"0\" step=\"0.1\" onchange=\"recalculate()\">\n135:         </div>\n136:         <div>\n137:           <label style=\"font-size:11px;color:#94a3b8\">b (superior)</label>\n138:           <input type=\"number\" id=\"inputB\" value=\"2\" step=\"0.1\" onchange=\"recalculate()\">\n139:         </div>\n140:       </div>\n141:       <div id=\"limitError\" class=\"error-msg\" style=\"display:none\">⚠️ a debe ser menor que b</div>\n142:     </div>\n143: \n144:     <div class=\"section\">\n145:       <h3>🔢 Subintervalos (n)</h3>\n146:       <div style=\"display:flex;align-items:center;gap:8px\">\n147:         <input type=\"range\" id=\"nSlider\" min=\"1\" max=\"200\" value=\"4\" style=\"flex:1\" oninput=\"updateN(this.value)\">\n148:         <span id=\"nValue\" style=\"font-size:18px;font-weight:700;color:#e94560;width:40px;text-align:center\">4</span>\n149:       </div>\n150:       <div class=\"n-buttons\">\n151:         <button onclick=\"updateN(4)\" class=\"active\">n=4</button>\n152:         <button onclick=\"updateN(10)\">n=10</button>\n153:         <button onclick=\"updateN(50)\">n=50</button>\n154:         <button onclick=\"updateN(100)\">n=100</button>\n155:         <button onclick=\"updateN(200)\">n=200</button>\n156:       </div>\n157:     </div>\n158: \n159:     <div class=\"section\">\n160:       <h3>📊 Tipo de Suma</h3>\n161:       <div class=\"radio-group\">\n162:         <label><input type=\"radio\" name=\"type\" value=\"left\" checked onchange=\"recalculate()\"><span class=\"color-dot\" style=\"background:#22c55e\"></span>Izquierda</label>\n163:         <label><input type=\"radio\" name=\"type\" value=\"right\" onchange=\"recalculate()\"><span class=\"color-dot\" style=\"background:#f97316\"></span>Derecha</label>\n164:         <label><input type=\"radio\" name=\"type\" value=\"midpoint\" onchange=\"recalculate()\"><span class=\"color-dot\" style=\"background:#a855f7\"></span>Punto Medio</label>\n165:         <label><input type=\"radio\" name=\"type\" value=\"upper\" onchange=\"recalculate()\"><span class=\"color-dot\" style=\"background:#ef4444\"></span>Superior (máx)</label>\n166:         <label><input type=\"radio\" name=\"type\" value=\"lower\" onchange=\"recalculate()\"><span class=\"color-dot\" style=\"background:#3b82f6\"></span>Inferior (mín)</label>\n167:       </div>\n168:     </div>\n169: \n170:     <div class=\"section\">\n171:       <h3>⚡ Acciones</h3>\n172:       <div class=\"actions-grid\">\n173:         <button class=\"btn-primary\" onclick=\"recalculate()\">▶ Calcular</button>\n174:         <button class=\"btn-secondary\" id=\"animBtn\" onclick=\"toggleAnimation()\">🎬 Animar</button>\n175:         <button class=\"btn-secondary\" id=\"compareBtn\" onclick=\"toggleCompare()\">📊 Comparar</button>\n176:         <button class=\"btn-secondary\" id=\"exactBtn\" onclick=\"toggleExact()\">📐 Exacto</button>\n177:         <button class=\"btn-secondary\" onclick=\"downloadMainPNG()\">🖼️ PNG Gráfico</button>\n178:         <button class=\"btn-secondary\" onclick=\"downloadTablePNG()\">🖼️ PNG Tabla</button>\n179:         <button class=\"btn-secondary full\" onclick=\"exportTXT()\">📥 Exportar TXT</button>\n180:       </div>\n181:     </div>\n182:   </aside>\n183: \n184:   <!-- CENTRO -->\n185:   <main>\n186:     <div class=\"canvas-container\" id=\"mainCanvasContainer\">\n187:       <canvas id=\"mainCanvas\" width=\"800\" height=\"450\"></canvas>\n188:       <button class=\"download-btn\" onclick=\"downloadMainPNG()\">📥 PNG</button>\n189:     </div>\n190:     <div class=\"canvas-container\">\n191:       <canvas id=\"convCanvas\" width=\"800\" height=\"250\"></canvas>\n192:     </div>\n193:     <div class=\"table-container\" id=\"tableContainer\" style=\"display:none\">\n194:       <div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:12px\">\n195:         <h3 style=\"margin:0\">📈 Tabla de Convergencia</h3>\n196:         <button class=\"btn-secondary\" onclick=\"downloadTablePNG()\" style=\"font-size:11px;padding:4px 10px\">🖼️ PNG</button>\n197:       </div>\n198:       <table>\n199:         <thead>\n200:           <tr>\n201:             <th>n</th>\n202:             <th style=\"text-align:right;color:#22c55e\">S_izq</th>\n203:             <th style=\"text-align:right;color:#f97316\">S_der</th>\n204:             <th style=\"text-align:right;color:#a855f7\">S_med</th>\n205:             <th style=\"text-align:right;color:#fbbf24\">Error</th>\n206:           </tr>\n207:         </thead>\n208:         <tbody id=\"convTableBody\"></tbody>\n209:       </table>\n210:     </div>\n211:   </main>\n212: \n213:   <!-- PANEL DERECHO -->\n214:   <aside class=\"right\" id=\"stepPanel\">\n215:     <h2 style=\"font-size:15px;font-weight:700;color:#e94560;border-bottom:1px solid #0f3460;padding-bottom:8px;margin-bottom:16px\">📝 Desarrollo Paso a Paso</h2>\n216:     <div id=\"stepContent\"></div>\n217:   </aside>\n218: </div>\n219: \n220: <!-- MODAL AYUDA -->\n221: <div class=\"modal-overlay\" id=\"helpModal\" style=\"display:none\" onclick=\"if(event.target===this)toggleHelp()\">\n222:   <div class=\"modal\">\n223:     <h2>🎓 ¿Cómo Funciona? <button onclick=\"toggleHelp()\">✕</button></h2>\n224:     <div id=\"helpContent\"></div>\n225:   </div>\n226: </div>\n227: \n228: <script>\n229: // ═══════════════════════════════════════════\n230: // FUNCIONES PREDEFINIDAS\n231: // ═══════════════════════════════════════════\n232: const FUNCTIONS = {\n233:   'x2': {\n234:     label: 'f(x) = x²', latex: 'f(x) = x^2',\n235:     fn: x => x*x,\n236:     anti: x => x*x*x/3, antiLabel: 'F(x) = \\\\frac{x^3}{3}'\n237:   },\n238:   'x3-x': {\n239:     label: 'f(x) = x³ - x', latex: 'f(x) = x^3 - x',\n240:     fn: x => x*x*x - x,\n241:     anti: x => x*x*x*x/4 - x*x/2, antiLabel: 'F(x) = \\\\frac{x^4}{4} - \\\\frac{x^2}{2}'\n242:   },\n243:   'sin': {\n244:     label: 'f(x) = sin(x)', latex: 'f(x) = \\\\sin(x)',\n245:     fn: x => Math.sin(x),\n246:     anti: x => -Math.cos(x), antiLabel: 'F(x) = -\\\\cos(x)'\n247:   },\n248:   'exp': {\n249:     label: 'f(x) = eˣ', latex: 'f(x) = e^x',\n250:     fn: x => Math.exp(x),\n251:     anti: x => Math.exp(x), antiLabel: 'F(x) = e^x'\n252:   },\n253:   'sqrt': {\n254:     label: 'f(x) = √x', latex: 'f(x) = \\\\sqrt{x}',\n255:     fn: x => Math.sqrt(Math.max(0,x)),\n256:     anti: x => (2/3)*Math.pow(Math.max(0,x),1.5), antiLabel: 'F(x) = \\\\frac{2}{3}x^{3/2}'\n257:   },\n258:   '1/x': {\n259:     label: 'f(x) = 1/x', latex: 'f(x) = \\\\frac{1}{x}',\n260:     fn: x => x!==0 ? 1/x : Infinity,\n261:     anti: x => Math.log(Math.abs(x)), antiLabel: 'F(x) = \\\\ln|x|'\n262:   }\n263: };\n264: \n265: const TYPE_LABELS = {left:'Izquierda',right:'Derecha',midpoint:'Punto Medio',upper:'Superior',lower:'Inferior'};\n266: const TYPE_COLORS = {left:'#22c55e',right:'#f97316',midpoint:'#a855f7',upper:'#ef4444',lower:'#3b82f6'};\n267: \n268: // ═══════════════════════════════════════════\n269: // ESTADO\n270: // ═══════════════════════════════════════════\n271: let state = {\n272:   fnKey: 'x2', customFn: '', useCustom: false,\n273:   a: 0, b: 2, n: 4, type: 'left',\n274:   showCompare: false, showExact: false, animating: false\n275: };\n276: let animId = null;\n277: let result = null;\n278: let exactValue = null;\n279: let convData = [];\n280: \n281: // ═══════════════════════════════════════════\n282: // CÁLCULOS\n283: // ═══════════════════════════════════════════\n284: function getActiveFn() {\n285:   if (state.useCustom) {\n286:     try {\n287:       const s = state.customFn.replace(/\\^/g,'**').replace(/sin/g,'Math.sin').replace(/cos/g,'Math.cos').replace(/sqrt/g,'Math.sqrt').replace(/log/g,'Math.log').replace(/exp/g,'Math.exp').replace(/pi/g,'Math.PI');\n288:       return new Function('x','return '+s);\n289:     } catch { return x => x; }\n290:   }\n291:   return FUNCTIONS[state.fnKey].fn;\n292: }\n293: \n294: function computeRiemann(fn, a, b, n, type) {\n295:   const dx = (b-a)/n;\n296:   const points = [];\n297:   let sum = 0;\n298:   for (let i = 0; i < n; i++) {\n299:     const xL = a + i*dx, xR = xL + dx;\n300:     let xStar, height;\n301:     if (type === 'left') { xStar = xL; height = fn(xStar); }\n302:     else if (type === 'right') { xStar = xR; height = fn(xStar); }\n303:     else if (type === 'midpoint') { xStar = (xL+xR)/2; height = fn(xStar); }\n304:     else if (type === 'upper') {\n305:       let max = -Infinity;\n306:       for (let s=0;s<=50;s++){const v=fn(xL+s/50*dx);if(isFinite(v)&&v>max)max=v;}\n307:       height = max; xStar = (xL+xR)/2;\n308:     } else {\n309:       let min = Infinity;\n310:       for (let s=0;s<=50;s++){const v=fn(xL+s/50*dx);if(isFinite(v)&&v<min)min=v;}\n311:       height = min; xStar = (xL+xR)/2;\n312:     }\n313:     const area = height * dx;\n314:     sum += area;\n315:     points.push({i:i+1, x:xStar, fx:height, area, xLeft:xL, xRight:xR, height});\n316:   }\n317:   return {dx, sum, points};\n318: }\n319: \n320: function recalculate() {\n321:   state.a = parseFloat(document.getElementById('inputA').value) || 0;\n322:   state.b = parseFloat(document.getElementById('inputB').value) || 0;\n323:   state.type = document.querySelector('input[name=\"type\"]:checked').value;\n324:   state.useCustom = document.getElementById('useCustom').checked;\n325:   state.customFn = document.getElementById('customFn').value;\n326: \n327:   if (state.a >= state.b) {\n328:     document.getElementById('limitError').style.display = 'block';\n329:     return;\n330:   }\n331:   document.getElementById('limitError').style.display = 'none';\n332: \n333:   const fn = getActiveFn();\n334:   result = computeRiemann(fn, state.a, state.b, state.n, state.type);\n335: \n336:   const fnDef = FUNCTIONS[state.fnKey];\n337:   exactValue = fnDef.anti(state.b) - fnDef.anti(state.a);\n338: \n339:   // Tabla de convergencia\n340:   const nVals = [1,2,4,8,10,16,20,32,50,64,100,128,200];\n341:   convData = nVals.map(n => {\n342:     const sL = computeRiemann(fn,state.a,state.b,n,'left').sum;\n343:     const sR = computeRiemann(fn,state.a,state.b,n,'right').sum;\n344:     const sM = computeRiemann(fn,state.a,state.b,n,'midpoint').sum;\n345:     return {n, sLeft:sL, sRight:sR, sMid:sM, errorMid:Math.abs(sM-exactValue)};\n346:   });\n347: \n348:   updateDisplay();\n349: }\n350: \n351: // ═══════════════════════════════════════════\n352: // RENDERIZADO KATEX\n353: // ═══════════════════════════════════════════\n354: function renderMath(tex, display=false) {\n355:   try {\n356:     return katex.renderToString(tex, {displayMode:display, throwOnError:false});\n357:   } catch { return tex; }\n358: }\n359: \n360: // ═══════════════════════════════════════════\n361: // ACTUALIZAR DISPLAY\n362: // ═══════════════════════════════════════════\n363: function updateDisplay() {\n364:   drawMainCanvas();\n365:   drawConvCanvas();\n366:   updateTable();\n367:   updateStepByStep();\n368:   updateFnDisplay();\n369: }\n370: \n371: function updateFnDisplay() {\n372:   const el = document.getElementById('fnDisplay');\n373:   if (state.useCustom) {\n374:     el.innerHTML = renderMath('f(x) = ' + (state.customFn || '?'));\n375:   } else {\n376:     el.innerHTML = renderMath(FUNCTIONS[state.fnKey].latex);\n377:   }\n378: }\n379: \n380: // ═══════════════════════════════════════════\n381: // CANVAS PRINCIPAL\n382: // ═══════════════════════════════════════════\n383: function drawMainCanvas() {\n384:   const canvas = document.getElementById('mainCanvas');\n385:   const container = document.getElementById('mainCanvasContainer');\n386:   canvas.width = container.clientWidth;\n387:   canvas.height = Math.floor(container.clientWidth * 9/16);\n388:   const ctx = canvas.getContext('2d');\n389:   const W = canvas.width, H = canvas.height;\n390:   const pad = {top:40,right:40,bottom:50,left:60};\n391:   const pW = W-pad.left-pad.right, pH = H-pad.top-pad.bottom;\n392: \n393:   ctx.fillStyle = '#0f0f23';\n394:   ctx.fillRect(0,0,W,H);\n395: \n396:   const fn = getActiveFn();\n397:   let yMin=0, yMax=0;\n398:   for (let i=0;i<=200;i++){const x=state.a+(i/200)*(state.b-state.a);const y=fn(x);if(isFinite(y)){yMin=Math.min(yMin,y);yMax=Math.max(yMax,y);}}\n399:   if (result) for (const p of result.points){yMin=Math.min(yMin,p.height);yMax=Math.max(yMax,p.height);}\n400:   const yr = yMax-yMin||1; yMin-=yr*.1; yMax+=yr*.1;\n401: \n402:   const toX = x => pad.left + ((x-state.a)/(state.b-state.a))*pW;\n403:   const toY = y => pad.top + pH - ((y-yMin)/(yMax-yMin))*pH;\n404: \n405:   // Grid\n406:   ctx.strokeStyle='#1e293b';ctx.lineWidth=.5;\n407:   for(let i=0;i<=8;i++){const x=pad.left+i/8*pW;ctx.beginPath();ctx.moveTo(x,pad.top);ctx.lineTo(x,pad.top+pH);ctx.stroke();const y=pad.top+i/8*pH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+pW,y);ctx.stroke();}\n408: \n409:   // Ejes\n410:   ctx.strokeStyle='#64748b';ctx.lineWidth=2;\n411:   const axY=toY(0);if(axY>=pad.top&&axY<=pad.top+pH){ctx.beginPath();ctx.moveTo(pad.left,axY);ctx.lineTo(pad.left+pW,axY);ctx.stroke();}\n412:   const axX=toX(0);if(axX>=pad.left&&axX<=pad.left+pW){ctx.beginPath();ctx.moveTo(axX,pad.top);ctx.lineTo(axX,pad.top+pH);ctx.stroke();}\n413: \n414:   // Etiquetas ejes\n415:   ctx.fillStyle='#94a3b8';ctx.font='11px monospace';ctx.textAlign='center';\n416:   for(let i=0;i<=5;i++){const v=state.a+i/5*(state.b-state.a);ctx.fillText(v.toFixed(2),toX(v),pad.top+pH+20);}\n417:   ctx.textAlign='right';\n418:   for(let i=0;i<=5;i++){const v=yMin+i/5*(yMax-yMin);ctx.fillText(v.toFixed(2),pad.left-8,toY(v)+4);}\n419: \n420:   // Rectángulos\n421:   if (result) {\n422:     const types = state.showCompare ? ['left','right','midpoint','upper','lower'] : [state.type];\n423:     for (const t of types) {\n424:       const r = computeRiemann(fn,state.a,state.b,state.n,t);\n425:       const c = TYPE_COLORS[t];\n426:       for (const p of r.points) {\n427:         const sx=toX(p.xLeft),sw=toX(p.xRight)-sx,sy=toY(p.height);\n428:         ctx.fillStyle=c+'30';ctx.strokeStyle=c+'80';ctx.lineWidth=1;\n429:         if(p.height>=0){ctx.fillRect(sx,sy,sw,toY(0)-sy);ctx.strokeRect(sx,sy,sw,toY(0)-sy);}\n430:         else{ctx.fillRect(sx,toY(0),sw,sy-toY(0));ctx.strokeRect(sx,toY(0),sw,sy-toY(0));}\n431:       }\n432:     }\n433:   }\n434: \n435:   // Función\n436:   ctx.strokeStyle='#60a5fa';ctx.lineWidth=2.5;ctx.beginPath();let started=false;\n437:   for(let i=0;i<=500;i++){const x=state.a+i/500*(state.b-state.a);const y=fn(x);if(!isFinite(y)){started=false;continue;}const sx=toX(x),sy=toY(y);if(!started){ctx.moveTo(sx,sy);started=true;}else ctx.lineTo(sx,sy);}\n438:   ctx.stroke();\n439: \n440:   // Línea valor exacto\n441:   if (state.showExact && exactValue!==null) {\n442:     const ey=toY(exactValue/(state.b-state.a));\n443:     ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.setLineDash([8,4]);\n444:     ctx.beginPath();ctx.moveTo(pad.left,ey);ctx.lineTo(pad.left+pW,ey);ctx.stroke();ctx.setLineDash([]);\n445:     ctx.fillStyle='#fbbf24';ctx.font='bold 12px monospace';ctx.textAlign='left';\n446:     ctx.fillText('∫f(x)dx = '+exactValue.toFixed(4),pad.left+10,ey-8);\n447:   }\n448: \n449:   // Leyenda\n450:   ctx.fillStyle='#e2e8f0';ctx.font='bold 12px monospace';ctx.textAlign='left';\n451:   ctx.fillText('n = '+state.n+' | Δx = '+result.dx.toFixed(4)+' | Sₙ = '+result.sum.toFixed(4),pad.left+10,pad.top-12);\n452:   ctx.fillStyle='#60a5fa';ctx.font='bold 13px monospace';ctx.textAlign='right';\n453:   ctx.fillText(FUNCTIONS[state.fnKey].label,pad.left+pW-10,pad.top-12);\n454: }\n455: \n456: // ═══════════════════════════════════════════\n457: // CANVAS CONVERGENCIA\n458: // ═══════════════════════════════════════════\n459: function drawConvCanvas() {\n460:   const canvas = document.getElementById('convCanvas');\n461:   canvas.width = canvas.parentElement.clientWidth;\n462:   canvas.height = Math.floor(canvas.width*5/16);\n463:   const ctx = canvas.getContext('2d');\n464:   const W=canvas.width,H=canvas.height;\n465:   const pad={top:30,right:20,bottom:40,left:60};\n466:   const pW=W-pad.left-pad.right,pH=H-pad.top-pad.bottom;\n467: \n468:   ctx.fillStyle='#0f0f23';ctx.fillRect(0,0,W,H);\n469:   if(convData.length===0)return;\n470: \n471:   let yMin=Infinity,yMax=-Infinity;\n472:   for(const r of convData){for(const v of [r.sLeft,r.sRight,r.sMid]){if(isFinite(v)){yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}}}\n473:   if(exactValue!==null){yMin=Math.min(yMin,exactValue);yMax=Math.max(yMax,exactValue);}\n474:   const rng=yMax-yMin||1;yMin-=rng*.1;yMax+=rng*.1;\n475: \n476:   const toX=n=>pad.left+(Math.log(n+1)/Math.log(201))*pW;\n477:   const toY=v=>pad.top+pH-((v-yMin)/(yMax-yMin))*pH;\n478: \n479:   // Grid\n480:   ctx.strokeStyle='#1e293b';ctx.lineWidth=.5;\n481:   for(let i=0;i<=5;i++){const y=pad.top+i/5*pH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+pW,y);ctx.stroke();}\n482: \n483:   // Línea exacta\n484:   if(exactValue!==null){const ey=toY(exactValue);ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(pad.left,ey);ctx.lineTo(pad.left+pW,ey);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#fbbf24';ctx.font='10px monospace';ctx.textAlign='right';ctx.fillText('Exacto = '+exactValue.toFixed(4),pad.left+pW-5,ey-5);}\n485: \n486:   // Líneas por tipo\n487:   const types=[{key:'sLeft',color:'#22c55e'},{key:'sRight',color:'#f97316'},{key:'sMid',color:'#a855f7'}];\n488:   for(const t of types){ctx.strokeStyle=t.color;ctx.lineWidth=2;ctx.beginPath();let s=false;for(const r of convData){const v=r[t.key];if(!isFinite(v))continue;const sx=toX(r.n),sy=toY(v);if(!s){ctx.moveTo(sx,sy);s=true;}else ctx.lineTo(sx,sy);}ctx.stroke();for(const r of convData){const v=r[t.key];if(!isFinite(v))continue;ctx.fillStyle=t.color;ctx.beginPath();ctx.arc(toX(r.n),toY(v),3,0,Math.PI*2);ctx.fill();}}\n489: \n490:   // Etiquetas\n491:   ctx.fillStyle='#94a3b8';ctx.font='10px monospace';ctx.textAlign='center';\n492:   for(const r of convData){if([1,4,10,32,64,200].includes(r.n))ctx.fillText('n='+r.n,toX(r.n),H-10);}\n493:   ctx.textAlign='right';\n494:   for(let i=0;i<=4;i++){const v=yMin+i/4*(yMax-yMin);ctx.fillText(v.toFixed(2),pad.left-5,toY(v)+4);}\n495: \n496:   // Título\n497:   ctx.fillStyle='#e2e8f0';ctx.font='bold 11px sans-serif';ctx.textAlign='left';\n498:   ctx.fillText('Convergencia de Sₙ → ∫f(x)dx',pad.left,15);\n499: \n500:   // Leyenda\n501:   const lg=[{c:'#22c55e',l:'Izq'},{c:'#f97316',l:'Der'},{c:'#a855f7',l:'Medio'},{c:'#fbbf24',l:'Exacto'}];\n502:   let lx=pad.left+pW-170;ctx.font='9px sans-serif';\n503:   for(const i of lg){ctx.fillStyle=i.c;ctx.fillRect(lx,8,10,10);ctx.fillStyle='#94a3b8';ctx.textAlign='left';ctx.fillText(i.l,lx+14,17);lx+=42;}\n504: }\n505: \n506: // ═══════════════════════════════════════════\n507: // TABLA\n508: // ═══════════════════════════════════════════\n509: function updateTable() {\n510:   const tc = document.getElementById('tableContainer');\n511:   tc.style.display = convData.length > 0 ? 'block' : 'none';\n512:   const tbody = document.getElementById('convTableBody');\n513:   tbody.innerHTML = convData.map(r => `<tr>\n514:     <td>${r.n}</td>\n515:     <td style=\"text-align:right;color:#86efac\">${r.sLeft.toFixed(4)}</td>\n516:     <td style=\"text-align:right;color:#fdba74\">${r.sRight.toFixed(4)}</td>\n517:     <td style=\"text-align:right;color:#d8b4fe\">${r.sMid.toFixed(4)}</td>\n518:     <td style=\"text-align:right;color:#fde047\">${r.errorMid.toFixed(6)}</td>\n519:   </tr>`).join('');\n520: }\n521: \n522: // ═══════════════════════════════════════════\n523: // PASO A PASO\n524: // ═══════════════════════════════════════════\n525: function updateStepByStep() {\n526:   if (!result) return;\n527:   const fnDef = FUNCTIONS[state.fnKey];\n528:   const dx = result.dx;\n529:   const error = exactValue!==null ? Math.abs(result.sum-exactValue) : null;\n530:   const errorRel = exactValue && exactValue!==0 ? (error/Math.abs(exactValue))*100 : null;\n531: \n532:   let html = '';\n533: \n534:   // PASO 1\n535:   html += `<div class=\"step-card\"><h4>PASO 1: Identificación</h4>\n536:     <p>Función: ${renderMath(fnDef.latex)}</p>\n537:     <p>Intervalo: ${renderMath('['+state.a+',\\\\,'+state.b+']')}</p>\n538:     <p>Subintervalos: ${renderMath('n = '+state.n)}</p>\n539:     <p>Tipo: <span style=\"color:#d8b4fe\">${TYPE_LABELS[state.type]}</span></p>\n540:   </div>`;\n541: \n542:   // PASO 2\n543:   html += `<div class=\"step-card\"><h4>PASO 2: Cálculo de Δx</h4>\n544:     ${renderMath('\\\\Delta x = \\\\frac{b - a}{n}', true)}\n545:     ${renderMath('\\\\Delta x = \\\\frac{'+state.b+' - '+state.a+'}{'+state.n+'} = '+dx.toFixed(6), true)}\n546:   </div>`;\n547: \n548:   // PASO 3\n549:   let pointFormula = '';\n550:   if(state.type==='left') pointFormula=`x_i = a + (i-1)\\\\cdot\\\\Delta x = ${state.a} + (i-1)\\\\cdot${dx.toFixed(4)}`;\n551:   else if(state.type==='right') pointFormula=`x_i = a + i\\\\cdot\\\\Delta x = ${state.a} + i\\\\cdot${dx.toFixed(4)}`;\n552:   else if(state.type==='midpoint') pointFormula=`x_i = a + (i-0.5)\\\\cdot\\\\Delta x`;\n553:   else if(state.type==='upper') pointFormula=`x_i^* = \\\\arg\\\\max_{x\\\\in[x_{i-1},x_i]} f(x)`;\n554:   else pointFormula=`x_i^* = \\\\arg\\\\min_{x\\\\in[x_{i-1},x_i]} f(x)`;\n555: \n556:   html += `<div class=\"step-card\"><h4>PASO 3: Puntos de evaluación</h4>\n557:     ${renderMath(pointFormula, true)}\n558:     <p style=\"font-size:11px;color:#94a3b8;font-family:monospace;margin-top:8px\">\n559:       Primeros: ${result.points.slice(0,Math.min(5,state.n)).map(p=>p.x.toFixed(3)).join(', ')}\n560:       ${state.n>5?' ... '+result.points.slice(-2).map(p=>p.x.toFixed(3)).join(', '):''}\n561:     </p>\n562:   </div>`;\n563: \n564:   // PASO 4\n565:   html += `<div class=\"step-card\"><h4>PASO 4: Tabla de valores</h4>\n566:     <table style=\"width:100%;font-size:10px;font-family:monospace\">\n567:     <tr style=\"color:#64748b;border-bottom:1px solid #0f3460\"><th style=\"text-align:left;padding:4px\">i</th><th style=\"text-align:right;padding:4px\">${renderMath('x_i^*')}</th><th style=\"text-align:right;padding:4px\">${renderMath('f(x_i^*)')}</th><th style=\"text-align:right;padding:4px\">${renderMath('f(x_i^*)\\\\cdot\\\\Delta x')}</th></tr>`;\n568:   const showRows = result.points.slice(0, Math.min(10, state.n));\n569:   for (const p of showRows) {\n570:     html += `<tr style=\"border-bottom:1px solid rgba(15,52,96,.2)\"><td style=\"padding:3px 4px\">${p.i}</td><td style=\"padding:3px 4px;text-align:right\">${p.x.toFixed(4)}</td><td style=\"padding:3px 4px;text-align:right\">${p.fx.toFixed(4)}</td><td style=\"padding:3px 4px;text-align:right;color:#86efac\">${p.area.toFixed(4)}</td></tr>`;\n571:   }\n572:   if (state.n > 10) {\n573:     html += `<tr><td colspan=\"4\" style=\"color:#64748b;padding:3px 4px\">... (${state.n-10} filas más)</td></tr>`;\n574:     for (const p of result.points.slice(-2)) {\n575:       html += `<tr style=\"border-bottom:1px solid rgba(15,52,96,.2)\"><td style=\"padding:3px 4px\">${p.i}</td><td style=\"padding:3px 4px;text-align:right\">${p.x.toFixed(4)}</td><td style=\"padding:3px 4px;text-align:right\">${p.fx.toFixed(4)}</td><td style=\"padding:3px 4px;text-align:right;color:#86efac\">${p.area.toFixed(4)}</td></tr>`;\n576:     }\n577:   }\n578:   html += `</table></div>`;\n579: \n580:   // PASO 5\n581:   html += `<div class=\"step-card\"><h4>PASO 5: Suma</h4>\n582:     ${renderMath('S_n = \\\\sum_{i=1}^{n} f(x_i^*) \\\\cdot \\\\Delta x', true)}\n583:     <p style=\"font-size:11px;color:#94a3b8;font-family:monospace;word-break:break-all\">\n584:       Sₙ = ${result.points.slice(0,Math.min(4,state.n)).map(p=>p.area.toFixed(4)).join(' + ')}${state.n>4?' + ...':''}\n585:     </p>\n586:     ${renderMath('\\\\boxed{S_{'+state.n+'} = '+result.sum.toFixed(6)}', true)}\n587:   </div>`;\n588: \n589:   // PASO 6\n590:   if (state.showExact && exactValue !== null) {\n591:     html += `<div class=\"step-card highlight\"><h4 style=\"color:#fbbf24\">PASO 6: Límite (Integral Exacta)</h4>\n592:       ${renderMath('\\\\int_a^b f(x)\\\\,dx = \\\\lim_{n\\\\to\\\\infty} S_n', true)}\n593:       <p>Antiderivada: ${renderMath(fnDef.antiLabel)}</p>\n594:       ${renderMath('F('+state.b+') - F('+state.a+') = '+fnDef.anti(state.b).toFixed(4)+' - '+fnDef.anti(state.a).toFixed(4), true)}\n595:       ${renderMath('\\\\boxed{\\\\int_{'+state.a+'}^{'+state.b+'} f(x)\\\\,dx = '+exactValue.toFixed(6)}', true)}\n596:     </div>`;\n597:   }\n598: \n599:   // PASO 7\n600:   if (state.showExact && error !== null) {\n601:     html += `<div class=\"step-card error\"><h4 style=\"color:#f87171\">PASO 7: Error</h4>\n602:       ${renderMath('\\\\text{Error} = |S_n - \\\\text{Exacto}| = |'+result.sum.toFixed(6)+' - '+exactValue.toFixed(6)+'|', true)}\n603:       ${renderMath('\\\\boxed{\\\\text{Error} = '+error.toFixed(6)}', true)}\n604:       ${errorRel!==null ? renderMath('\\\\text{Error relativo} = '+errorRel.toFixed(4)+'\\\\%', true) : ''}\n605:     </div>`;\n606:   }\n607: \n608:   // Fórmula general\n609:   html += `<div class=\"step-card formula\"><h4 style=\"color:#e94560\">🎯 Fórmula General</h4>\n610:     ${renderMath('\\\\int_a^b f(x)\\\\,dx = \\\\lim_{n\\\\to\\\\infty} \\\\sum_{i=1}^{n} f(x_i^*) \\\\cdot \\\\Delta x', true)}\n611:     ${renderMath('\\\\text{donde } \\\\Delta x = \\\\frac{b-a}{n}', true)}\n612:   </div>`;\n613: \n614:   document.getElementById('stepContent').innerHTML = html;\n615: }\n616: \n617: // ═══════════════════════════════════════════\n618: // CONTROLES\n619: // ═══════════════════════════════════════════\n620: function updateN(val) {\n621:   state.n = parseInt(val);\n622:   document.getElementById('nSlider').value = val;\n623:   document.getElementById('nValue').textContent = val;\n624:   document.querySelectorAll('.n-buttons button').forEach(b => b.classList.toggle('active', b.textContent === 'n='+val));\n625:   recalculate();\n626: }\n627: \n628: function changeFunction() {\n629:   state.fnKey = document.getElementById('fnSelect').value;\n630:   document.getElementById('useCustom').checked = false;\n631:   state.useCustom = false;\n632:   document.getElementById('customFn').style.display = 'none';\n633:   recalculate();\n634: }\n635: \n636: function toggleCustom() {\n637:   state.useCustom = document.getElementById('useCustom').checked;\n638:   document.getElementById('customFn').style.display = state.useCustom ? 'block' : 'none';\n639:   recalculate();\n640: }\n641: \n642: function toggleCompare() {\n643:   state.showCompare = !state.showCompare;\n644:   document.getElementById('compareBtn').style.background = state.showCompare ? '#a855f7' : '#0f3460';\n645:   updateDisplay();\n646: }\n647: \n648: function toggleExact() {\n649:   state.showExact = !state.showExact;\n650:   document.getElementById('exactBtn').style.background = state.showExact ? '#fbbf24' : '#0f3460';\n651:   document.getElementById('exactBtn').style.color = state.showExact ? '#000' : '#e2e8f0';\n652:   updateDisplay();\n653: }\n654: \n655: function toggleAnimation() {\n656:   if (state.animating) {\n657:     state.animating = false;\n658:     if (animId) cancelAnimationFrame(animId);\n659:     document.getElementById('animBtn').textContent = '🎬 Animar';\n660:     return;\n661:   }\n662:   state.animating = true;\n663:   document.getElementById('animBtn').textContent = '⏸ Pausar';\n664:   state.n = 1;\n665:   let last = 0;\n666:   function step(ts) {\n667:     if (!state.animating) return;\n668:     if (ts - last >= 50) {\n669:       last = ts;\n670:       state.n++;\n671:       if (state.n > 200) { state.animating = false; document.getElementById('animBtn').textContent = '🎬 Animar'; return; }\n672:       document.getElementById('nSlider').value = state.n;\n673:       document.getElementById('nValue').textContent = state.n;\n674:       recalculate();\n675:     }\n676:     animId = requestAnimationFrame(step);\n677:   }\n678:   animId = requestAnimationFrame(step);\n679: }\n680: \n681: function loadExample(n) {\n682:   if (state.animating) toggleAnimation();\n683:   if (n===1){state.fnKey='x2';state.a=0;state.b=2;}\n684:   else if(n===2){state.fnKey='sin';state.a=0;state.b=Math.PI;}\n685:   else{state.fnKey='exp';state.a=0;state.b=1;}\n686:   state.n=4;state.useCustom=false;\n687:   document.getElementById('fnSelect').value=state.fnKey;\n688:   document.getElementById('inputA').value=state.a;\n689:   document.getElementById('inputB').value=parseFloat(state.b.toFixed(4));\n690:   document.getElementById('useCustom').checked=false;\n691:   document.getElementById('customFn').style.display='none';\n692:   updateN(4);\n693: }\n694: \n695: // ═══════════════════════════════════════════\n696: // DESCARGAS\n697: // ═══════════════════════════════════════════\n698: function downloadMainPNG() {\n699:   const c = document.getElementById('mainCanvas');\n700:   const link = document.createElement('a');\n701:   link.download = 'riemann_n'+state.n+'_'+state.type+'_'+Date.now()+'.png';\n702:   link.href = c.toDataURL('image/png');\n703:   link.click();\n704: }\n705: \n706: function downloadTablePNG() {\n707:   const c = document.createElement('canvas');\n708:   const pad=20,rh=28,cw=[60,120,120,120,120];\n709:   const tw=cw.reduce((a,b)=>a+b,0)+pad*2,th=(convData.length+2)*rh+pad*2+40;\n710:   c.width=tw;c.height=th;\n711:   const ctx=c.getContext('2d');\n712:   ctx.fillStyle='#0f0f23';ctx.fillRect(0,0,tw,th);\n713:   ctx.fillStyle='#e94560';ctx.font='bold 14px monospace';ctx.textAlign='left';\n714:   ctx.fillText('Tabla de Convergencia',pad,pad+15);\n715:   const headers=['n','S_izq','S_der','S_med','Error'];\n716:   const hy=pad+50;ctx.fillStyle='#64748b';ctx.font='bold 11px monospace';\n717:   let x=pad;for(let i=0;i<headers.length;i++){ctx.fillText(headers[i],x+5,hy);x+=cw[i];}\n718:   ctx.strokeStyle='#0f3460';ctx.beginPath();ctx.moveTo(pad,hy+8);ctx.lineTo(tw-pad,hy+8);ctx.stroke();\n719:   ctx.font='11px monospace';\n720:   convData.forEach((r,idx)=>{const y=hy+(idx+1)*rh;const vals=[r.n+'',r.sLeft.toFixed(4),r.sRight.toFixed(4),r.sMid.toFixed(4),r.errorMid.toFixed(6)];const cols=['#e2e8f0','#22c55e','#f97316','#a855f7','#fbbf24'];x=pad;for(let i=0;i<vals.length;i++){ctx.fillStyle=cols[i];ctx.fillText(vals[i],x+5,y);x+=cw[i];}});\n721:   const link=document.createElement('a');link.download='convergence_'+Date.now()+'.png';link.href=c.toDataURL('image/png');link.click();\n722: }\n723: \n724: function exportTXT() {\n725:   if(!result)return;\n726:   const txt=`═══════════════════════════════════════\\nRESULTADOS DE SUMA DE RIEMANN\\n═══════════════════════════════════════\\nFunción: ${FUNCTIONS[state.fnKey].label}\\nIntervalo: [${state.a}, ${state.b}]\\nn = ${state.n}\\nTipo: ${TYPE_LABELS[state.type]}\\nΔx = ${result.dx.toFixed(6)}\\nSuma = ${result.sum.toFixed(6)}\\n${exactValue!==null?'Valor Exacto = '+exactValue.toFixed(6):''}\\n${exactValue!==null?'Error = '+Math.abs(result.sum-exactValue).toFixed(6):''}`;\n727:   const blob=new Blob([txt],{type:'text/plain'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='riemann_results.txt';link.click();\n728: }\n729: \n730: // ═══════════════════════════════════════════\n731: // AYUDA\n732: // ═══════════════════════════════════════════\n733: function toggleHelp() {\n734:   const m = document.getElementById('helpModal');\n735:   m.style.display = m.style.display === 'none' ? 'flex' : 'none';\n736:   if (m.style.display === 'flex' && !document.getElementById('helpContent').innerHTML) {\n737:     document.getElementById('helpContent').innerHTML = `\n738:       <section><h3>1. CONCEPTO: Suma de Riemann</h3><p>Una <strong>Suma de Riemann</strong> aproxima el área bajo una curva dividiendo el intervalo ${renderMath('[a,b]')} en ${renderMath('n')} subintervalos y construyendo rectángulos cuya altura es ${renderMath('f(x_i^*)')}.</p></section>\n739:       <section><h3>2. FÓRMULA GENERAL</h3><div class=\"math-block\">${renderMath('S_n = \\\\sum_{i=1}^{n} f(x_i^*) \\\\cdot \\\\Delta x', true)}<p style=\"color:#94a3b8;font-size:12px;margin-top:8px\">${renderMath('\\\\text{donde } \\\\Delta x = \\\\frac{b-a}{n}')}</p></div></section>\n740:       <section><h3>3. INTERPRETACIÓN GEOMÉTRICA</h3><p>Cada rectángulo aproxima un \"pedazo\" del área. La base es ${renderMath('\\\\Delta x')} y la altura es ${renderMath('f(x_i^*)')}.</p></section>\n741:       <section><h3>4. EL LÍMITE</h3><p>Cuando ${renderMath('n \\\\to \\\\infty')}, la suma converge al área exacta:</p><div class=\"math-block\">${renderMath('\\\\int_a^b f(x)\\\\,dx = \\\\lim_{n\\\\to\\\\infty} \\\\sum_{i=1}^{n} f(x_i^*) \\\\cdot \\\\Delta x', true)}</div></section>\n742:       <section><h3>5. TEOREMA FUNDAMENTAL</h3><div class=\"math-block\">${renderMath('\\\\int_a^b f(x)\\\\,dx = F(b) - F(a)', true)}<p style=\"color:#94a3b8;font-size:12px;margin-top:8px\">${renderMath('\\\\text{donde } F\\'(x) = f(x)')}</p></div></section>\n743:       <section><h3>6. EJEMPLO: ${renderMath('f(x)=x^2')} en ${renderMath('[0,2]')}</h3>\n744:         <div class=\"math-block\">\n745:           ${renderMath('\\\\Delta x = \\\\frac{2}{n}', true)}\n746:           ${renderMath('S_4 = 0 + 0.125 + 0.5 + 1.125 = 1.75', true)}\n747:           ${renderMath('\\\\int_0^2 x^2\\\\,dx = \\\\frac{8}{3} \\\\approx 2.6667', true)}\n748:           <p style=\"color:#e94560;font-size:12px;margin-top:8px\">¡Al aumentar n, la suma converge al valor exacto!</p>\n749:         </div>\n750:       </section>`;\n751:   }\n752: }\n753: \n754: // ═══════════════════════════════════════════\n755: // CONTADOR DE VISITAS\n756: // ═══════════════════════════════════════════\n757: (async function() {\n758:   try {\n759:     const r = await fetch('https://api.counterapi.dev/v1/riemann-visualizer-v1/up');\n760:     if (r.ok) { const d = await r.json(); document.getElementById('visitCount').textContent = d.count.toLocaleString(); return; }\n761:   } catch {}\n762:   const s = localStorage.getItem('riemann_visits');\n763:   const c = s ? parseInt(s)+1 : 1;\n764:   localStorage.setItem('riemann_visits', c);\n765:   document.getElementById('visitCount').textContent = c + ' (local)';\n766: })();\n767: \n768: // ═══════════════════════════════════════════\n769: // RESIZE\n770: // ═══════════════════════════════════════════\n771: window.addEventListener('resize', () => { if(result) updateDisplay(); });\n772: \n773: // ═══════════════════════════════════════════\n774: // INICIALIZAR\n775: // ═══════════════════════════════════════════\n776: recalculate();\n777: </script>\n778: </body>\n779: </html>\n780: \n\n(End of file - 780 lines)", "contentType": "text/html"}, "totalLines": 780}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sumas de Riemann — Visualizador Interactivo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:#1a1a2e;color:#e2e8f0;min-height:100vh}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#0f0f23}
+::-webkit-scrollbar-thumb{background:#0f3460;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#e94560}
+input[type="range"]{-webkit-appearance:none;appearance:none;height:6px;background:#0f3460;border-radius:3px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#e94560;cursor:pointer}
+select,input[type="number"],input[type="text"]{background:#0f3460;border:1px solid #1a4080;color:#e2e8f0;border-radius:6px;padding:8px 12px;font-size:14px;width:100%}
+select:focus,input:focus{outline:none;border-color:#e94560}
+button{cursor:pointer;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;transition:all .2s}
+.btn-primary{background:#e94560;color:white}
+.btn-primary:hover{background:#d63851}
+.btn-secondary{background:#0f3460;color:#e2e8f0}
+.btn-secondary:hover{background:#1a4080}
+.btn-accent{background:#a855f7;color:white}
+.btn-warning{background:#fbbf24;color:#000}
+header{background:#16213e;border-bottom:1px solid #0f3460;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+header h1{font-size:18px;color:#e94560;display:flex;align-items:center;gap:10px}
+.examples-bar{background:rgba(22,33,62,.5);padding:8px 20px;border-bottom:1px solid rgba(15,52,96,.5);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.examples-bar span{color:#94a3b8;font-size:13px}
+.examples-bar button{padding:4px 12px;font-size:12px;background:#0f3460;color:#e2e8f0}
+.examples-bar button:hover{background:#e94560}
+.main-layout{display:flex;flex-wrap:wrap;min-height:calc(100vh - 110px)}
+aside{padding:16px;overflow-y:auto;max-height:calc(100vh - 110px)}
+aside.left{width:300px;background:rgba(22,33,62,.7);border-right:1px solid rgba(15,52,96,.5)}
+aside.right{width:420px;background:rgba(22,33,62,.7);border-left:1px solid rgba(15,52,96,.5)}
+main{flex:1;padding:16px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.section{margin-bottom:16px}
+.section h3{font-size:13px;font-weight:700;color:#e94560;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.step-card{padding:12px;background:rgba(15,52,96,.3);border-radius:8px;margin-bottom:12px}
+.step-card h4{font-size:11px;font-weight:700;color:#93c5fd;margin-bottom:8px}
+.step-card p,.step-card div{font-size:13px;color:#cbd5e1;margin-bottom:4px}
+.step-card.highlight{border:1px solid rgba(251,191,36,.3)}
+.step-card.error{border:1px solid rgba(239,68,68,.3)}
+.step-card.formula{background:rgba(233,69,96,.1);border:1px solid rgba(233,69,96,.3)}
+.canvas-container{background:#0f0f23;border-radius:8px;border:1px solid #0f3460;overflow:hidden;position:relative}
+.canvas-container canvas{width:100%;display:block}
+.canvas-container .download-btn{position:absolute;top:8px;right:8px;padding:4px 10px;background:rgba(0,0,0,.6);color:white;font-size:11px;border-radius:4px;opacity:0;transition:opacity .2s}
+.canvas-container:hover .download-btn{opacity:1}
+.table-container{background:#0f0f23;border-radius:8px;border:1px solid #0f3460;padding:16px;overflow-x:auto}
+.table-container h3{font-size:13px;font-weight:700;color:#e94560;margin-bottom:12px}
+table{width:100%;font-size:11px;font-family:monospace;border-collapse:collapse}
+th{padding:6px 8px;text-align:left;border-bottom:1px solid #0f3460;color:#94a3b8;font-weight:600}
+td{padding:4px 8px;border-bottom:1px solid rgba(15,52,96,.3)}
+tr:hover{background:rgba(15,52,96,.2)}
+.radio-group{display:flex;flex-direction:column;gap:6px}
+.radio-group label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#cbd5e1}
+.radio-group label:hover{color:white}
+.radio-group input[type="radio"]{accent-color:#e94560}
+.color-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actions-grid .full{grid-column:1/-1}
+.n-buttons{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.n-buttons button{padding:4px 8px;font-size:11px}
+.n-buttons button.active{background:#e94560}
+.error-msg{margin-top:12px;padding:8px;background:rgba(127,29,29,.3);border:1px solid #b91c1c;border-radius:6px;font-size:12px;color:#fca5a5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#16213e;border:1px solid #0f3460;border-radius:12px;max-width:800px;width:100%;max-height:80vh;overflow-y:auto;padding:24px}
+.modal h2{font-size:20px;color:#e94560;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal h2 button{background:none;color:#94a3b8;font-size:20px;padding:0}
+.modal section{margin-bottom:20px}
+.modal section h3{font-weight:700;color:#93c5fd;margin-bottom:8px}
+.modal section p{color:#cbd5e1;font-size:14px;line-height:1.6}
+.modal .math-block{background:rgba(15,52,96,.5);padding:16px;border-radius:8px;text-align:center;margin:8px 0}
+.visit-counter{display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8}
+.visit-counter .dot{width:8px;height:8px;border-radius:50%;background:#22c55e}
+.checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.checkbox-row input{accent-color:#e94560}
+.checkbox-row label{font-size:12px;color:#94a3b8}
+.fn-display{padding:8px;background:rgba(15,52,96,.5);border-radius:6px;text-align:center;margin-top:8px}
+@media(max-width:1024px){
+  aside.left,aside.right{width:100%;max-height:none;border:none;border-bottom:1px solid rgba(15,52,96,.5)}
+  .main-layout{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span style="font-size:24px">∫</span> Sumas de Riemann — Visualizador Interactivo</h1>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="visit-counter">
+      <span class="dot"></span>
+      <span id="visitCount" style="font-family:monospace">...</span>
+      <span style="color:#64748b">visitas</span>
+    </div>
+    <button class="btn-secondary" onclick="toggleHelp()">🎓 ¿Cómo funciona?</button>
+  </div>
+</header>
+
+<div class="examples-bar">
+  <span>Ejemplos:</span>
+  <button onclick="loadExample(1)">x² en [0,2]</button>
+  <button onclick="loadExample(2)">sin(x) en [0,π]</button>
+  <button onclick="loadExample(3)">eˣ en [0,1]</button>
+</div>
+
+<div class="main-layout">
+  <aside class="left">
+    <div class="section">
+      <h3>📐 Función</h3>
+      <select id="fnSelect" onchange="changeFunction()">
+        <option value="x2">f(x) = x²</option>
+        <option value="x3-x">f(x) = x³ - x</option>
+        <option value="sin">f(x) = sin(x)</option>
+        <option value="exp">f(x) = eˣ</option>
+        <option value="sqrt">f(x) = √x</option>
+        <option value="1/x">f(x) = 1/x</option>
+      </select>
+      <div class="checkbox-row" style="margin-top:8px">
+        <input type="checkbox" id="useCustom" onchange="toggleCustom()">
+        <label for="useCustom">Función personalizada</label>
+      </div>
+      <input type="text" id="customFn" placeholder="Ej: x^2 + sin(x)" style="display:none" oninput="recalculate()">
+      <div class="fn-display" id="fnDisplay"></div>
+    </div>
+
+    <div class="section">
+      <h3>📏 Límites de Integración</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="font-size:11px;color:#94a3b8">a (inferior)</label>
+          <input type="number" id="inputA" value="0" step="0.1" onchange="recalculate()">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#94a3b8">b (superior)</label>
+          <input type="number" id="inputB" value="2" step="0.1" onchange="recalculate()">
+        </div>
+      </div>
+      <div id="limitError" class="error-msg" style="display:none">⚠️ a debe ser menor que b</div>
+    </div>
+
+    <div class="section">
+      <h3>🔢 Subintervalos (n)</h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="range" id="nSlider" min="1" max="200" value="4" style="flex:1" oninput="updateN(this.value)">
+        <span id="nValue" style="font-size:18px;font-weight:700;color:#e94560;width:40px;text-align:center">4</span>
+      </div>
+      <div class="n-buttons">
+        <button onclick="updateN(4)" class="active">n=4</button>
+        <button onclick="updateN(10)">n=10</button>
+        <button onclick="updateN(50)">n=50</button>
+        <button onclick="updateN(100)">n=100</button>
+        <button onclick="updateN(200)">n=200</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>📊 Tipo de Suma</h3>
+      <div class="radio-group">
+        <label><input type="radio" name="type" value="left" checked onchange="recalculate()"><span class="color-dot" style="background:#22c55e"></span>Izquierda</label>
+        <label><input type="radio" name="type" value="right" onchange="recalculate()"><span class="color-dot" style="background:#f97316"></span>Derecha</label>
+        <label><input type="radio" name="type" value="midpoint" onchange="recalculate()"><span class="color-dot" style="background:#a855f7"></span>Punto Medio</label>
+        <label><input type="radio" name="type" value="upper" onchange="recalculate()"><span class="color-dot" style="background:#ef4444"></span>Superior (máx)</label>
+        <label><input type="radio" name="type" value="lower" onchange="recalculate()"><span class="color-dot" style="background:#3b82f6"></span>Inferior (mín)</label>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>⚡ Acciones</h3>
+      <div class="actions-grid">
+        <button class="btn-primary" onclick="recalculate()">▶ Calcular</button>
+        <button class="btn-secondary" id="animBtn" onclick="toggleAnimation()">🎬 Animar</button>
+        <button class="btn-secondary" id="compareBtn" onclick="toggleCompare()">📊 Comparar</button>
+        <button class="btn-secondary" id="exactBtn" onclick="toggleExact()">📐 Exacto</button>
+        <button class="btn-secondary" onclick="downloadMainPNG()">🖼️ PNG Gráfico</button>
+        <button class="btn-secondary" onclick="downloadTablePNG()">🖼️ PNG Tabla</button>
+        <button class="btn-secondary full" onclick="exportTXT()">📥 Exportar TXT</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="canvas-container" id="mainCanvasContainer">
+      <canvas id="mainCanvas" width="800" height="450"></canvas>
+      <button class="download-btn" onclick="downloadMainPNG()">📥 PNG</button>
+    </div>
+    <div class="canvas-container">
+      <canvas id="convCanvas" width="800" height="250"></canvas>
+    </div>
+    <div class="table-container" id="tableContainer" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0">📈 Tabla de Convergencia</h3>
+        <button class="btn-secondary" onclick="downloadTablePNG()" style="font-size:11px;padding:4px 10px">🖼️ PNG</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>n</th>
+            <th style="text-align:right;color:#22c55e">S_izq</th>
+            <th style="text-align:right;color:#f97316">S_der</th>
+            <th style="text-align:right;color:#a855f7">S_med</th>
+            <th style="text-align:right;color:#fbbf24">Error</th>
+          </tr>
+        </thead>
+        <tbody id="convTableBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <aside class="right" id="stepPanel">
+    <h2 style="font-size:15px;font-weight:700;color:#e94560;border-bottom:1px solid #0f3460;padding-bottom:8px;margin-bottom:16px">📝 Desarrollo Paso a Paso</h2>
+    <div id="stepContent"></div>
+  </aside>
+</div>
+
+<div class="modal-overlay" id="helpModal" style="display:none" onclick="if(event.target===this)toggleHelp()">
+  <div class="modal">
+    <h2>🎓 ¿Cómo Funciona? <button onclick="toggleHelp()">✕</button></h2>
+    <div id="helpContent"></div>
+  </div>
+</div>
+
+<script>
+const FUNCTIONS = {
+  'x2': {
+    label: 'f(x) = x²', latex: 'f(x) = x^2',
+    fn: x => x*x,
+    anti: x => x*x*x/3, antiLabel: 'F(x) = \\frac{x^3}{3}'
+  },
+  'x3-x': {
+    label: 'f(x) = x³ - x', latex: 'f(x) = x^3 - x',
+    fn: x => x*x*x - x,
+    anti: x => x*x*x*x/4 - x*x/2, antiLabel: 'F(x) = \\frac{x^4}{4} - \\frac{x^2}{2}'
+  },
+  'sin': {
+    label: 'f(x) = sin(x)', latex: 'f(x) = \\sin(x)',
+    fn: x => Math.sin(x),
+    anti: x => -Math.cos(x), antiLabel: 'F(x) = -\\cos(x)'
+  },
+  'exp': {
+    label: 'f(x) = eˣ', latex: 'f(x) = e^x',
+    fn: x => Math.exp(x),
+    anti: x => Math.exp(x), antiLabel: 'F(x) = e^x'
+  },
+  'sqrt': {
+    label: 'f(x) = √x', latex: 'f(x) = \\sqrt{x}',
+    fn: x => Math.sqrt(Math.max(0,x)),
+    anti: x => (2/3)*Math.pow(Math.max(0,x),1.5), antiLabel: 'F(x) = \\frac{2}{3}x^{3/2}'
+  },
+  '1/x': {
+    label: 'f(x) = 1/x', latex: 'f(x) = \\frac{1}{x}',
+    fn: x => x!==0 ? 1/x : Infinity,
+    anti: x => Math.log(Math.abs(x)), antiLabel: 'F(x) = \\ln|x|'
+  }
+};
+
+const TYPE_LABELS = {left:'Izquierda',right:'Derecha',midpoint:'Punto Medio',upper:'Superior',lower:'Inferior'};
+const TYPE_COLORS = {left:'#22c55e',right:'#f97316',midpoint:'#a855f7',upper:'#ef4444',lower:'#3b82f6'};
+
+let state = {
+  fnKey: 'x2', customFn: '', useCustom: false,
+  a: 0, b: 2, n: 4, type: 'left',
+  showCompare: false, showExact: false, animating: false
+};
+let animId = null;
+let result = null;
+let exactValue = null;
+let convData = [];
+
+function getActiveFn() {
+  if (state.useCustom) {
+    try {
+      const s = state.customFn.replace(/\^/g,'**').replace(/sin/g,'Math.sin').replace(/cos/g,'Math.cos').replace(/sqrt/g,'Math.sqrt').replace(/log/g,'Math.log').replace(/exp/g,'Math.exp').replace(/pi/g,'Math.PI');
+      return new Function('x','return '+s);
+    } catch { return x => x; }
+  }
+  return FUNCTIONS[state.fnKey].fn;
+}
+
+function computeRiemann(fn, a, b, n, type) {
+  const dx = (b-a)/n;
+  const points = [];
+  let sum = 0;
+  for (let i = 0; i < n; i++) {
+    const xL = a + i*dx, xR = xL + dx;
+    let xStar, height;
+    if (type === 'left') { xStar = xL; height = fn(xStar); }
+    else if (type === 'right') { xStar = xR; height = fn(xStar); }
+    else if (type === 'midpoint') { xStar = (xL+xR)/2; height = fn(xStar); }
+    else if (type === 'upper') {
+      let max = -Infinity;
+      for (let s=0;s<=50;s++){const v=fn(xL+s/50*dx);if(isFinite(v)&&v>max)max=v;}
+      height = max; xStar = (xL+xR)/2;
+    } else {
+      let min = Infinity;
+      for (let s=0;s<=50;s++){const v=fn(xL+s/50*dx);if(isFinite(v)&&v<min)min=v;}
+      height = min; xStar = (xL+xR)/2;
+    }
+    const area = height * dx;
+    sum += area;
+    points.push({i:i+1, x:xStar, fx:height, area, xLeft:xL, xRight:xR, height});
+  }
+  return {dx, sum, points};
+}
+
+function recalculate() {
+  state.a = parseFloat(document.getElementById('inputA').value) || 0;
+  state.b = parseFloat(document.getElementById('inputB').value) || 0;
+  state.type = document.querySelector('input[name="type"]:checked').value;
+  state.useCustom = document.getElementById('useCustom').checked;
+  state.customFn = document.getElementById('customFn').value;
+
+  if (state.a >= state.b) {
+    document.getElementById('limitError').style.display = 'block';
+    return;
+  }
+  document.getElementById('limitError').style.display = 'none';
+
+  const fn = getActiveFn();
+  result = computeRiemann(fn, state.a, state.b, state.n, state.type);
+
+  const fnDef = FUNCTIONS[state.fnKey];
+  exactValue = fnDef.anti(state.b) - fnDef.anti(state.a);
+
+  const nVals = [1,2,4,8,10,16,20,32,50,64,100,128,200];
+  convData = nVals.map(n => {
+    const sL = computeRiemann(fn,state.a,state.b,n,'left').sum;
+    const sR = computeRiemann(fn,state.a,state.b,n,'right').sum;
+    const sM = computeRiemann(fn,state.a,state.b,n,'midpoint').sum;
+    return {n, sLeft:sL, sRight:sR, sMid:sM, errorMid:Math.abs(sM-exactValue)};
+  });
+
+  updateDisplay();
+}
+
+function renderMath(tex, display=false) {
+  try {
+    return katex.renderToString(tex, {displayMode:display, throwOnError:false});
+  } catch { return tex; }
+}
+
+function updateDisplay() {
+  drawMainCanvas();
+  drawConvCanvas();
+  updateTable();
+  updateStepByStep();
+  updateFnDisplay();
+}
+
+function updateFnDisplay() {
+  const el = document.getElementById('fnDisplay');
+  if (state.useCustom) {
+    el.innerHTML = renderMath('f(x) = ' + (state.customFn || '?'));
+  } else {
+    el.innerHTML = renderMath(FUNCTIONS[state.fnKey].latex);
+  }
+}
