@@ -356,3 +356,351 @@ function updateFnDisplay() {
     el.innerHTML = renderMath(FUNCTIONS[state.fnKey].latex);
   }
 }
+function drawMainCanvas() {
+  const canvas = document.getElementById('mainCanvas');
+  const container = document.getElementById('mainCanvasContainer');
+  canvas.width = container.clientWidth;
+  canvas.height = Math.floor(container.clientWidth * 9/16);
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = {top:40,right:40,bottom:50,left:60};
+  const pW = W-pad.left-pad.right, pH = H-pad.top-pad.bottom;
+
+  ctx.fillStyle = '#0f0f23';
+  ctx.fillRect(0,0,W,H);
+
+  const fn = getActiveFn();
+  let yMin=0, yMax=0;
+  for (let i=0;i<=200;i++){const x=state.a+(i/200)*(state.b-state.a);const y=fn(x);if(isFinite(y)){yMin=Math.min(yMin,y);yMax=Math.max(yMax,y);}}
+  if (result) for (const p of result.points){yMin=Math.min(yMin,p.height);yMax=Math.max(yMax,p.height);}
+  const yr = yMax-yMin||1; yMin-=yr*.1; yMax+=yr*.1;
+
+  const toX = x => pad.left + ((x-state.a)/(state.b-state.a))*pW;
+  const toY = y => pad.top + pH - ((y-yMin)/(yMax-yMin))*pH;
+
+  ctx.strokeStyle='#1e293b';ctx.lineWidth=.5;
+  for(let i=0;i<=8;i++){const x=pad.left+i/8*pW;ctx.beginPath();ctx.moveTo(x,pad.top);ctx.lineTo(x,pad.top+pH);ctx.stroke();const y=pad.top+i/8*pH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+pW,y);ctx.stroke();}
+
+  ctx.strokeStyle='#64748b';ctx.lineWidth=2;
+  const axY=toY(0);if(axY>=pad.top&&axY<=pad.top+pH){ctx.beginPath();ctx.moveTo(pad.left,axY);ctx.lineTo(pad.left+pW,axY);ctx.stroke();}
+  const axX=toX(0);if(axX>=pad.left&&axX<=pad.left+pW){ctx.beginPath();ctx.moveTo(axX,pad.top);ctx.lineTo(axX,pad.top+pH);ctx.stroke();}
+
+  ctx.fillStyle='#94a3b8';ctx.font='11px monospace';ctx.textAlign='center';
+  for(let i=0;i<=5;i++){const v=state.a+i/5*(state.b-state.a);ctx.fillText(v.toFixed(2),toX(v),pad.top+pH+20);}
+  ctx.textAlign='right';
+  for(let i=0;i<=5;i++){const v=yMin+i/5*(yMax-yMin);ctx.fillText(v.toFixed(2),pad.left-8,toY(v)+4);}
+
+  if (result) {
+    const types = state.showCompare ? ['left','right','midpoint','upper','lower'] : [state.type];
+    for (const t of types) {
+      const r = computeRiemann(fn,state.a,state.b,state.n,t);
+      const c = TYPE_COLORS[t];
+      for (const p of r.points) {
+        const sx=toX(p.xLeft),sw=toX(p.xRight)-sx,sy=toY(p.height);
+        ctx.fillStyle=c+'30';ctx.strokeStyle=c+'80';ctx.lineWidth=1;
+        if(p.height>=0){ctx.fillRect(sx,sy,sw,toY(0)-sy);ctx.strokeRect(sx,sy,sw,toY(0)-sy);}
+        else{ctx.fillRect(sx,toY(0),sw,sy-toY(0));ctx.strokeRect(sx,toY(0),sw,sy-toY(0));}
+      }
+    }
+  }
+
+  ctx.strokeStyle='#60a5fa';ctx.lineWidth=2.5;ctx.beginPath();let started=false;
+  for(let i=0;i<=500;i++){const x=state.a+i/500*(state.b-state.a);const y=fn(x);if(!isFinite(y)){started=false;continue;}const sx=toX(x),sy=toY(y);if(!started){ctx.moveTo(sx,sy);started=true;}else ctx.lineTo(sx,sy);}
+  ctx.stroke();
+
+  if (state.showExact && exactValue!==null) {
+    const ey=toY(exactValue/(state.b-state.a));
+    ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.setLineDash([8,4]);
+    ctx.beginPath();ctx.moveTo(pad.left,ey);ctx.lineTo(pad.left+pW,ey);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#fbbf24';ctx.font='bold 12px monospace';ctx.textAlign='left';
+    ctx.fillText('∫f(x)dx = '+exactValue.toFixed(4),pad.left+10,ey-8);
+  }
+
+  ctx.fillStyle='#e2e8f0';ctx.font='bold 12px monospace';ctx.textAlign='left';
+  ctx.fillText('n = '+state.n+' | Δx = '+result.dx.toFixed(4)+' | Sₙ = '+result.sum.toFixed(4),pad.left+10,pad.top-12);
+  ctx.fillStyle='#60a5fa';ctx.font='bold 13px monospace';ctx.textAlign='right';
+  ctx.fillText(FUNCTIONS[state.fnKey].label,pad.left+pW-10,pad.top-12);
+}
+
+function drawConvCanvas() {
+  const canvas = document.getElementById('convCanvas');
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = Math.floor(canvas.width*5/16);
+  const ctx = canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const pad={top:30,right:20,bottom:40,left:60};
+  const pW=W-pad.left-pad.right,pH=H-pad.top-pad.bottom;
+
+  ctx.fillStyle='#0f0f23';ctx.fillRect(0,0,W,H);
+  if(convData.length===0)return;
+
+  let yMin=Infinity,yMax=-Infinity;
+  for(const r of convData){for(const v of [r.sLeft,r.sRight,r.sMid]){if(isFinite(v)){yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}}}
+  if(exactValue!==null){yMin=Math.min(yMin,exactValue);yMax=Math.max(yMax,exactValue);}
+  const rng=yMax-yMin||1;yMin-=rng*.1;yMax+=rng*.1;
+
+  const toX=n=>pad.left+(Math.log(n+1)/Math.log(201))*pW;
+  const toY=v=>pad.top+pH-((v-yMin)/(yMax-yMin))*pH;
+
+  ctx.strokeStyle='#1e293b';ctx.lineWidth=.5;
+  for(let i=0;i<=5;i++){const y=pad.top+i/5*pH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+pW,y);ctx.stroke();}
+
+  if(exactValue!==null){const ey=toY(exactValue);ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(pad.left,ey);ctx.lineTo(pad.left+pW,ey);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#fbbf24';ctx.font='10px monospace';ctx.textAlign='right';ctx.fillText('Exacto = '+exactValue.toFixed(4),pad.left+pW-5,ey-5);}
+
+  const types=[{key:'sLeft',color:'#22c55e'},{key:'sRight',color:'#f97316'},{key:'sMid',color:'#a855f7'}];
+  for(const t of types){ctx.strokeStyle=t.color;ctx.lineWidth=2;ctx.beginPath();let s=false;for(const r of convData){const v=r[t.key];if(!isFinite(v))continue;const sx=toX(r.n),sy=toY(v);if(!s){ctx.moveTo(sx,sy);s=true;}else ctx.lineTo(sx,sy);}ctx.stroke();for(const r of convData){const v=r[t.key];if(!isFinite(v))continue;ctx.fillStyle=t.color;ctx.beginPath();ctx.arc(toX(r.n),toY(v),3,0,Math.PI*2);ctx.fill();}}
+
+  ctx.fillStyle='#94a3b8';ctx.font='10px monospace';ctx.textAlign='center';
+  for(const r of convData){if([1,4,10,32,64,200].includes(r.n))ctx.fillText('n='+r.n,toX(r.n),H-10);}
+  ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const v=yMin+i/4*(yMax-yMin);ctx.fillText(v.toFixed(2),pad.left-5,toY(v)+4);}
+
+  ctx.fillStyle='#e2e8f0';ctx.font='bold 11px sans-serif';ctx.textAlign='left';
+  ctx.fillText('Convergencia de Sₙ → ∫f(x)dx',pad.left,15);
+
+  const lg=[{c:'#22c55e',l:'Izq'},{c:'#f97316',l:'Der'},{c:'#a855f7',l:'Medio'},{c:'#fbbf24',l:'Exacto'}];
+  let lx=pad.left+pW-170;ctx.font='9px sans-serif';
+  for(const i of lg){ctx.fillStyle=i.c;ctx.fillRect(lx,8,10,10);ctx.fillStyle='#94a3b8';ctx.textAlign='left';ctx.fillText(i.l,lx+14,17);lx+=42;}
+}
+
+function updateTable() {
+  const tc = document.getElementById('tableContainer');
+  tc.style.display = convData.length > 0 ? 'block' : 'none';
+  const tbody = document.getElementById('convTableBody');
+  tbody.innerHTML = convData.map(r => `<tr>
+    <td>${r.n}</td>
+    <td style="text-align:right;color:#86efac">${r.sLeft.toFixed(4)}</td>
+    <td style="text-align:right;color:#fdba74">${r.sRight.toFixed(4)}</td>
+    <td style="text-align:right;color:#d8b4fe">${r.sMid.toFixed(4)}</td>
+    <td style="text-align:right;color:#fde047">${r.errorMid.toFixed(6)}</td>
+  </tr>`).join('');
+}
+
+function updateStepByStep() {
+  if (!result) return;
+  const fnDef = FUNCTIONS[state.fnKey];
+  const dx = result.dx;
+  const error = exactValue!==null ? Math.abs(result.sum-exactValue) : null;
+  const errorRel = exactValue && exactValue!==0 ? (error/Math.abs(exactValue))*100 : null;
+
+  let html = '';
+
+  html += `<div class="step-card"><h4>PASO 1: Identificación</h4>
+    <p>Función: ${renderMath(fnDef.latex)}</p>
+    <p>Intervalo: ${renderMath('['+state.a+',\\,'+state.b+']')}</p>
+    <p>Subintervalos: ${renderMath('n = '+state.n)}</p>
+    <p>Tipo: <span style="color:#d8b4fe">${TYPE_LABELS[state.type]}</span></p>
+  </div>`;
+
+  html += `<div class="step-card"><h4>PASO 2: Cálculo de Δx</h4>
+    ${renderMath('\\Delta x = \\frac{b - a}{n}', true)}
+    ${renderMath('\\Delta x = \\frac{'+state.b+' - '+state.a+'}{'+state.n+'} = '+dx.toFixed(6), true)}
+  </div>`;
+
+  let pointFormula = '';
+  if(state.type==='left') pointFormula=`x_i = a + (i-1)\\cdot\\Delta x = ${state.a} + (i-1)\\cdot${dx.toFixed(4)}`;
+  else if(state.type==='right') pointFormula=`x_i = a + i\\cdot\\Delta x = ${state.a} + i\\cdot${dx.toFixed(4)}`;
+  else if(state.type==='midpoint') pointFormula=`x_i = a + (i-0.5)\\cdot\\Delta x`;
+  else if(state.type==='upper') pointFormula=`x_i^* = \\arg\\max_{x\\in[x_{i-1},x_i]} f(x)`;
+  else pointFormula=`x_i^* = \\arg\\min_{x\\in[x_{i-1},x_i]} f(x)`;
+
+  html += `<div class="step-card"><h4>PASO 3: Puntos de evaluación</h4>
+    ${renderMath(pointFormula, true)}
+    <p style="font-size:11px;color:#94a3b8;font-family:monospace;margin-top:8px">
+      Primeros: ${result.points.slice(0,Math.min(5,state.n)).map(p=>p.x.toFixed(3)).join(', ')}
+      ${state.n>5?' ... '+result.points.slice(-2).map(p=>p.x.toFixed(3)).join(', '):''}
+    </p>
+  </div>`;
+
+  html += `<div class="step-card"><h4>PASO 4: Tabla de valores</h4>
+    <table style="width:100%;font-size:10px;font-family:monospace">
+    <tr style="color:#64748b;border-bottom:1px solid #0f3460"><th style="text-align:left;padding:4px">i</th><th style="text-align:right;padding:4px">${renderMath('x_i^*')}</th><th style="text-align:right;padding:4px">${renderMath('f(x_i^*)')}</th><th style="text-align:right;padding:4px">${renderMath('f(x_i^*)\\cdot\\Delta x')}</th></tr>`;
+  const showRows = result.points.slice(0, Math.min(10, state.n));
+  for (const p of showRows) {
+    html += `<tr style="border-bottom:1px solid rgba(15,52,96,.2)"><td style="padding:3px 4px">${p.i}</td><td style="padding:3px 4px;text-align:right">${p.x.toFixed(4)}</td><td style="padding:3px 4px;text-align:right">${p.fx.toFixed(4)}</td><td style="padding:3px 4px;text-align:right;color:#86efac">${p.area.toFixed(4)}</td></tr>`;
+  }
+  if (state.n > 10) {
+    html += `<tr><td colspan="4" style="color:#64748b;padding:3px 4px">... (${state.n-10} filas más)</td></tr>`;
+    for (const p of result.points.slice(-2)) {
+      html += `<tr style="border-bottom:1px solid rgba(15,52,96,.2)"><td style="padding:3px 4px">${p.i}</td><td style="padding:3px 4px;text-align:right">${p.x.toFixed(4)}</td><td style="padding:3px 4px;text-align:right">${p.fx.toFixed(4)}</td><td style="padding:3px 4px;text-align:right;color:#86efac">${p.area.toFixed(4)}</td></tr>`;
+    }
+  }
+  html += `</table></div>`;
+
+  html += `<div class="step-card"><h4>PASO 5: Suma</h4>
+    ${renderMath('S_n = \\sum_{i=1}^{n} f(x_i^*) \\cdot \\Delta x', true)}
+    <p style="font-size:11px;color:#94a3b8;font-family:monospace;word-break:break-all">
+      Sₙ = ${result.points.slice(0,Math.min(4,state.n)).map(p=>p.area.toFixed(4)).join(' + ')}${state.n>4?' + ...':''}
+    </p>
+    ${renderMath('\\boxed{S_{'+state.n+'} = '+result.sum.toFixed(6)}', true)}
+  </div>`;
+
+  if (state.showExact && exactValue !== null) {
+    html += `<div class="step-card highlight"><h4 style="color:#fbbf24">PASO 6: Límite (Integral Exacta)</h4>
+      ${renderMath('\\int_a^b f(x)\\,dx = \\lim_{n\\to\\infty} S_n', true)}
+      <p>Antiderivada: ${renderMath(fnDef.antiLabel)}</p>
+      ${renderMath('F('+state.b+') - F('+state.a+') = '+fnDef.anti(state.b).toFixed(4)+' - '+fnDef.anti(state.a).toFixed(4), true)}
+      ${renderMath('\\boxed{\\int_{'+state.a+'}^{'+state.b+'} f(x)\\,dx = '+exactValue.toFixed(6)}', true)}
+    </div>`;
+  }
+
+  if (state.showExact && error !== null) {
+    html += `<div class="step-card error"><h4 style="color:#f87171">PASO 7: Error</h4>
+      ${renderMath('\\text{Error} = |S_n - \\text{Exacto}| = |'+result.sum.toFixed(6)+' - '+exactValue.toFixed(6)+'|', true)}
+      ${renderMath('\\boxed{\\text{Error} = '+error.toFixed(6)}', true)}
+      ${errorRel!==null ? renderMath('\\text{Error relativo} = '+errorRel.toFixed(4)+'\\%', true) : ''}
+    </div>`;
+  }
+
+  html += `<div class="step-card formula"><h4 style="color:#e94560">🎯 Fórmula General</h4>
+    ${renderMath('\\int_a^b f(x)\\,dx = \\lim_{n\\to\\infty} \\sum_{i=1}^{n} f(x_i^*) \\cdot \\Delta x', true)}
+    ${renderMath('\\text{donde } \\Delta x = \\frac{b-a}{n}', true)}
+  </div>`;
+
+  document.getElementById('stepContent').innerHTML = html;
+}
+function updateN(val) {
+  state.n = parseInt(val);
+  document.getElementById('nSlider').value = val;
+  document.getElementById('nValue').textContent = val;
+  document.querySelectorAll('.n-buttons button').forEach(b => b.classList.toggle('active', b.textContent === 'n='+val));
+  recalculate();
+}
+
+function changeFunction() {
+  state.fnKey = document.getElementById('fnSelect').value;
+  document.getElementById('useCustom').checked = false;
+  state.useCustom = false;
+  document.getElementById('customFn').style.display = 'none';
+  recalculate();
+}
+
+function toggleCustom() {
+  state.useCustom = document.getElementById('useCustom').checked;
+  document.getElementById('customFn').style.display = state.useCustom ? 'block' : 'none';
+  recalculate();
+}
+
+function toggleCompare() {
+  state.showCompare = !state.showCompare;
+  document.getElementById('compareBtn').style.background = state.showCompare ? '#a855f7' : '#0f3460';
+  updateDisplay();
+}
+
+function toggleExact() {
+  state.showExact = !state.showExact;
+  document.getElementById('exactBtn').style.background = state.showExact ? '#fbbf24' : '#0f3460';
+  document.getElementById('exactBtn').style.color = state.showExact ? '#000' : '#e2e8f0';
+  updateDisplay();
+}
+
+function toggleAnimation() {
+  if (state.animating) {
+    state.animating = false;
+    if (animId) cancelAnimationFrame(animId);
+    document.getElementById('animBtn').textContent = '🎬 Animar';
+    return;
+  }
+  state.animating = true;
+  document.getElementById('animBtn').textContent = '⏸ Pausar';
+  state.n = 1;
+  let last = 0;
+  function step(ts) {
+    if (!state.animating) return;
+    if (ts - last >= 50) {
+      last = ts;
+      state.n++;
+      if (state.n > 200) { state.animating = false; document.getElementById('animBtn').textContent = '🎬 Animar'; return; }
+      document.getElementById('nSlider').value = state.n;
+      document.getElementById('nValue').textContent = state.n;
+      recalculate();
+    }
+    animId = requestAnimationFrame(step);
+  }
+  animId = requestAnimationFrame(step);
+}
+
+function loadExample(n) {
+  if (state.animating) toggleAnimation();
+  if (n===1){state.fnKey='x2';state.a=0;state.b=2;}
+  else if(n===2){state.fnKey='sin';state.a=0;state.b=Math.PI;}
+  else{state.fnKey='exp';state.a=0;state.b=1;}
+  state.n=4;state.useCustom=false;
+  document.getElementById('fnSelect').value=state.fnKey;
+  document.getElementById('inputA').value=state.a;
+  document.getElementById('inputB').value=parseFloat(state.b.toFixed(4));
+  document.getElementById('useCustom').checked=false;
+  document.getElementById('customFn').style.display='none';
+  updateN(4);
+}
+
+function downloadMainPNG() {
+  const c = document.getElementById('mainCanvas');
+  const link = document.createElement('a');
+  link.download = 'riemann_n'+state.n+'_'+state.type+'_'+Date.now()+'.png';
+  link.href = c.toDataURL('image/png');
+  link.click();
+}
+
+function downloadTablePNG() {
+  const c = document.createElement('canvas');
+  const pad=20,rh=28,cw=[60,120,120,120,120];
+  const tw=cw.reduce((a,b)=>a+b,0)+pad*2,th=(convData.length+2)*rh+pad*2+40;
+  c.width=tw;c.height=th;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#0f0f23';ctx.fillRect(0,0,tw,th);
+  ctx.fillStyle='#e94560';ctx.font='bold 14px monospace';ctx.textAlign='left';
+  ctx.fillText('Tabla de Convergencia',pad,pad+15);
+  const headers=['n','S_izq','S_der','S_med','Error'];
+  const hy=pad+50;ctx.fillStyle='#64748b';ctx.font='bold 11px monospace';
+  let x=pad;for(let i=0;i<headers.length;i++){ctx.fillText(headers[i],x+5,hy);x+=cw[i];}
+  ctx.strokeStyle='#0f3460';ctx.beginPath();ctx.moveTo(pad,hy+8);ctx.lineTo(tw-pad,hy+8);ctx.stroke();
+  ctx.font='11px monospace';
+  convData.forEach((r,idx)=>{const y=hy+(idx+1)*rh;const vals=[r.n+'',r.sLeft.toFixed(4),r.sRight.toFixed(4),r.sMid.toFixed(4),r.errorMid.toFixed(6)];const cols=['#e2e8f0','#22c55e','#f97316','#a855f7','#fbbf24'];x=pad;for(let i=0;i<vals.length;i++){ctx.fillStyle=cols[i];ctx.fillText(vals[i],x+5,y);x+=cw[i];}});
+  const link=document.createElement('a');link.download='convergence_'+Date.now()+'.png';link.href=c.toDataURL('image/png');link.click();
+}
+
+function exportTXT() {
+  if(!result)return;
+  const txt=`═══════════════════════════════════════\nRESULTADOS DE SUMA DE RIEMANN\n═══════════════════════════════════════\nFunción: ${FUNCTIONS[state.fnKey].label}\nIntervalo: [${state.a}, ${state.b}]\nn = ${state.n}\nTipo: ${TYPE_LABELS[state.type]}\nΔx = ${result.dx.toFixed(6)}\nSuma = ${result.sum.toFixed(6)}\n${exactValue!==null?'Valor Exacto = '+exactValue.toFixed(6):''}\n${exactValue!==null?'Error = '+Math.abs(result.sum-exactValue).toFixed(6):''}`;
+  const blob=new Blob([txt],{type:'text/plain'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='riemann_results.txt';link.click();
+}
+
+function toggleHelp() {
+  const m = document.getElementById('helpModal');
+  m.style.display = m.style.display === 'none' ? 'flex' : 'none';
+  if (m.style.display === 'flex' && !document.getElementById('helpContent').innerHTML) {
+    document.getElementById('helpContent').innerHTML = `
+      <section><h3>1. CONCEPTO: Suma de Riemann</h3><p>Una <strong>Suma de Riemann</strong> aproxima el área bajo una curva dividiendo el intervalo ${renderMath('[a,b]')} en ${renderMath('n')} subintervalos y construyendo rectángulos cuya altura es ${renderMath('f(x_i^*)')}.</p></section>
+      <section><h3>2. FÓRMULA GENERAL</h3><div class="math-block">${renderMath('S_n = \\sum_{i=1}^{n} f(x_i^*) \\cdot \\Delta x', true)}<p style="color:#94a3b8;font-size:12px;margin-top:8px">${renderMath('\\text{donde } \\Delta x = \\frac{b-a}{n}')}</p></div></section>
+      <section><h3>3. INTERPRETACIÓN GEOMÉTRICA</h3><p>Cada rectángulo aproxima un "pedazo" del área. La base es ${renderMath('\\Delta x')} y la altura es ${renderMath('f(x_i^*)')}.</p></section>
+      <section><h3>4. EL LÍMITE</h3><p>Cuando ${renderMath('n \\to \\infty')}, la suma converge al área exacta:</p><div class="math-block">${renderMath('\\int_a^b f(x)\\,dx = \\lim_{n\\to\\infty} \\sum_{i=1}^{n} f(x_i^*) \\cdot \\Delta x', true)}</div></section>
+      <section><h3>5. TEOREMA FUNDAMENTAL</h3><div class="math-block">${renderMath('\\int_a^b f(x)\\,dx = F(b) - F(a)', true)}<p style="color:#94a3b8;font-size:12px;margin-top:8px">${renderMath('\\text{donde } F\'(x) = f(x)')}</p></div></section>
+      <section><h3>6. EJEMPLO: ${renderMath('f(x)=x^2')} en ${renderMath('[0,2]')}</h3>
+        <div class="math-block">
+          ${renderMath('\\Delta x = \\frac{2}{n}', true)}
+          ${renderMath('S_4 = 0 + 0.125 + 0.5 + 1.125 = 1.75', true)}
+          ${renderMath('\\int_0^2 x^2\\,dx = \\frac{8}{3} \\approx 2.6667', true)}
+          <p style="color:#e94560;font-size:12px;margin-top:8px">¡Al aumentar n, la suma converge al valor exacto!</p>
+        </div>
+      </section>`;
+  }
+}
+
+(async function() {
+  try {
+    const r = await fetch('https://api.counterapi.dev/v1/riemann-visualizer-v1/up');
+    if (r.ok) { const d = await r.json(); document.getElementById('visitCount').textContent = d.count.toLocaleString(); return; }
+  } catch {}
+  const s = localStorage.getItem('riemann_visits');
+  const c = s ? parseInt(s)+1 : 1;
+  localStorage.setItem('riemann_visits', c);
+  document.getElementById('visitCount').textContent = c + ' (local)';
+})();
+
+window.addEventListener('resize', () => { if(result) updateDisplay(); });
+
+recalculate();
+</script>
+</body>
+</html>
