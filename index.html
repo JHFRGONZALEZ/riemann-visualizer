@@ -16,8 +16,9 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:#1a1a2e;color:#e2
 input[type="range"]{-webkit-appearance:none;appearance:none;height:6px;background:#0f3460;border-radius:3px;outline:none}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#e94560;cursor:pointer}
 select,input[type="number"],input[type="text"]{background:#0f3460;border:1px solid #1a4080;color:#e2e8f0;border-radius:6px;padding:8px 12px;font-size:14px;width:100%}
-select:focus,input:focus{outline:none;border-color:#e94560}
+select:focus,input:focus,button:focus-visible{outline:3px solid rgba(251,191,36,.65);outline-offset:2px;border-color:#e94560}
 button{cursor:pointer;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;transition:all .2s}
+button:disabled{cursor:not-allowed;opacity:.55}
 .btn-primary{background:#e94560;color:white}
 .btn-primary:hover{background:#d63851}
 .btn-secondary{background:#0f3460;color:#e2e8f0}
@@ -76,6 +77,7 @@ tr:hover{background:rgba(15,52,96,.2)}
 .checkbox-row input{accent-color:#e94560}
 .checkbox-row label{font-size:12px;color:#94a3b8}
 .fn-display{padding:8px;background:rgba(15,52,96,.5);border-radius:6px;text-align:center;margin-top:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:1024px){
   aside.left,aside.right{width:100%;max-height:none;border:none;border-bottom:1px solid rgba(15,52,96,.5)}
   .main-layout{flex-direction:column}
@@ -117,6 +119,7 @@ tr:hover{background:rgba(15,52,96,.2)}
         <label for="useCustom">Función personalizada</label>
       </div>
       <input type="text" id="customFn" placeholder="Ej: x^2 + sin(x)" style="display:none" oninput="recalculate()">
+      <div id="customError" class="error-msg" style="display:none">⚠️ Función no válida. Usa x, números y funciones como sin, cos, sqrt, log o exp.</div>
       <div class="fn-display" id="fnDisplay"></div>
     </div>
     <div class="section">
@@ -221,10 +224,22 @@ const TYPE_LABELS={left:'Izquierda',right:'Derecha',midpoint:'Punto Medio',upper
 const TYPE_COLORS={left:'#22c55e',right:'#f97316',midpoint:'#a855f7',upper:'#ef4444',lower:'#3b82f6'};
 let state={fnKey:'x2',customFn:'',useCustom:false,a:0,b:2,n:4,type:'left',showCompare:false,showExact:false,animating:false};
 let animId=null,result=null,exactValue=null,convData=[];
+function getFunctionLabel(){
+  return state.useCustom ? `f(x) = ${state.customFn || '?'}` : FUNCTIONS[state.fnKey].label;
+}
 function getActiveFn(){
   if(state.useCustom){
-    try{const s=state.customFn.replace(/\^/g,'**').replace(/sin/g,'Math.sin').replace(/cos/g,'Math.cos').replace(/sqrt/g,'Math.sqrt').replace(/log/g,'Math.log').replace(/exp/g,'Math.exp').replace(/pi/g,'Math.PI');return new Function('x','return '+s);}
-    catch{return x=>x;}
+    try{
+      const s=state.customFn.trim().toLowerCase()
+        .replace(/\^/g,'**')
+        .replace(/\b(sin|cos|sqrt|log|exp|abs)\b/g,'Math.$1')
+        .replace(/\bpi\b/g,'Math.PI');
+      if(!s)throw new Error('La función está vacía');
+      const fn=new Function('x','return '+s);
+      const test=fn(state.a);
+      if(typeof test!=='number'||Number.isNaN(test))throw new Error('La función no devuelve un número');
+      return fn;
+    }catch{return null;}
   }
   return FUNCTIONS[state.fnKey].fn;
 }
@@ -251,9 +266,12 @@ function recalculate(){
   if(state.a>=state.b){document.getElementById('limitError').style.display='block';return;}
   document.getElementById('limitError').style.display='none';
   const fn=getActiveFn();
+  const customError=document.getElementById('customError');
+  if(!fn){customError.style.display='block';result=null;exactValue=null;convData=[];updateFnDisplay();document.getElementById('stepContent').innerHTML='';return;}
+  customError.style.display='none';
   result=computeRiemann(fn,state.a,state.b,state.n,state.type);
   const fnDef=FUNCTIONS[state.fnKey];
-  exactValue=fnDef.anti(state.b)-fnDef.anti(state.a);
+  exactValue=state.useCustom?null:fnDef.anti(state.b)-fnDef.anti(state.a);
   const nVals=[1,2,4,8,10,16,20,32,50,64,100,128,200];
   convData=nVals.map(n=>{
     const sL=computeRiemann(fn,state.a,state.b,n,'left').sum;
@@ -270,8 +288,7 @@ function renderMath(tex,display=false){
 function updateDisplay(){drawMainCanvas();drawConvCanvas();updateTable();updateStepByStep();updateFnDisplay();}
 function updateFnDisplay(){
   const el=document.getElementById('fnDisplay');
-  if(state.useCustom){el.innerHTML=renderMath('f(x) = '+(state.customFn||'?'));}
-  else{el.innerHTML=renderMath(FUNCTIONS[state.fnKey].latex);}
+  el.innerHTML=renderMath(state.useCustom?'f(x) = '+(state.customFn||'?'):FUNCTIONS[state.fnKey].latex);
 }
 function drawMainCanvas(){
   const canvas=document.getElementById('mainCanvas');
@@ -325,7 +342,7 @@ function drawMainCanvas(){
   ctx.fillStyle='#e2e8f0';ctx.font='bold 12px monospace';ctx.textAlign='left';
   ctx.fillText('n = '+state.n+' | Δx = '+result.dx.toFixed(4)+' | Sₙ = '+result.sum.toFixed(4),pad.left+10,pad.top-12);
   ctx.fillStyle='#60a5fa';ctx.font='bold 13px monospace';ctx.textAlign='right';
-  ctx.fillText(FUNCTIONS[state.fnKey].label,pad.left+pW-10,pad.top-12);
+  ctx.fillText(getFunctionLabel(),pad.left+pW-10,pad.top-12);
 }
 function drawConvCanvas(){
   const canvas=document.getElementById('convCanvas');
@@ -378,7 +395,7 @@ function updateStepByStep(){
   const errorRel=exactValue&&exactValue!==0?(error/Math.abs(exactValue))*100:null;
   let html='';
   html+=`<div class="step-card"><h4>PASO 1: Identificación</h4>
-    <p>Función: ${renderMath(fnDef.latex)}</p>
+    <p>Función: ${renderMath(state.useCustom?'f(x) = '+state.customFn:fnDef.latex)}</p>
     <p>Intervalo: ${renderMath('['+state.a+',\\,'+state.b+']')}</p>
     <p>Subintervalos: ${renderMath('n = '+state.n)}</p>
     <p>Tipo: <span style="color:#d8b4fe">${TYPE_LABELS[state.type]}</span></p>
@@ -419,20 +436,20 @@ function updateStepByStep(){
     <p style="font-size:11px;color:#94a3b8;font-family:monospace;word-break:break-all">
       Sₙ = ${result.points.slice(0,Math.min(4,state.n)).map(p=>p.area.toFixed(4)).join(' + ')}${state.n>4?' + ...':''}
     </p>
-    ${renderMath('\\boxed{S_{'+state.n+'} = '+result.sum.toFixed(6)}',true)}
+    ${renderMath('\\boxed{S_{'+state.n+'} = '+result.sum.toFixed(6)+'}',true)}
   </div>`;
   if(state.showExact&&exactValue!==null){
     html+=`<div class="step-card highlight"><h4 style="color:#fbbf24">PASO 6: Límite (Integral Exacta)</h4>
       ${renderMath('\\int_a^b f(x)\\,dx = \\lim_{n\\to\\infty} S_n',true)}
       <p>Antiderivada: ${renderMath(fnDef.antiLabel)}</p>
       ${renderMath('F('+state.b+') - F('+state.a+') = '+fnDef.anti(state.b).toFixed(4)+' - '+fnDef.anti(state.a).toFixed(4),true)}
-      ${renderMath('\\boxed{\\int_{'+state.a+'}^{'+state.b+'} f(x)\\,dx = '+exactValue.toFixed(6)}',true)}
+      ${renderMath('\\boxed{\\int_{'+state.a+'}^{'+state.b+'} f(x)\\,dx = '+exactValue.toFixed(6)+'}',true)}
     </div>`;
   }
   if(state.showExact&&error!==null){
     html+=`<div class="step-card error"><h4 style="color:#f87171">PASO 7: Error</h4>
       ${renderMath('\\text{Error} = |S_n - \\text{Exacto}| = |'+result.sum.toFixed(6)+' - '+exactValue.toFixed(6)+'|',true)}
-      ${renderMath('\\boxed{\\text{Error} = '+error.toFixed(6)}',true)}
+      ${renderMath('\\boxed{\\text{Error} = '+error.toFixed(6)+'}',true)}
       ${errorRel!==null?renderMath('\\text{Error relativo} = '+errorRel.toFixed(4)+'\\%',true):''}
     </div>`;
   }
@@ -528,8 +545,7 @@ function downloadTablePNG(){
   ctx.fillText('Tabla de Convergencia',pad,pad+15);
   const headers=['n','S_izq','S_der','S_med','Error'];
   const hy=pad+50;ctx.fillStyle='#64748b';ctx.font='bold 11px monospace';
-  let x=pad;
-  for(let i=0;i<headers.length;i++){ctx.fillText(headers[i],x+5,hy);x+=cw[i];}
+  let x=pad;for(let i=0;i<headers.length;i++){ctx.fillText(headers[i],x+5,hy);x+=cw[i];}
   ctx.strokeStyle='#0f3460';ctx.beginPath();ctx.moveTo(pad,hy+8);ctx.lineTo(tw-pad,hy+8);ctx.stroke();
   ctx.font='11px monospace';
   convData.forEach((r,idx)=>{const y=hy+(idx+1)*rh;const vals=[r.n+'',r.sLeft.toFixed(4),r.sRight.toFixed(4),r.sMid.toFixed(4),r.errorMid.toFixed(6)];const cols=['#e2e8f0','#22c55e','#f97316','#a855f7','#fbbf24'];x=pad;for(let i=0;i<vals.length;i++){ctx.fillStyle=cols[i];ctx.fillText(vals[i],x+5,y);x+=cw[i];}});
@@ -537,17 +553,7 @@ function downloadTablePNG(){
 }
 function exportTXT(){
   if(!result)return;
-  const txt=`═══════════════════════════════════════
-RESULTADOS DE SUMA DE RIEMANN
-═══════════════════════════════════════
-Función: ${FUNCTIONS[state.fnKey].label}
-Intervalo: [${state.a}, ${state.b}]
-n = ${state.n}
-Tipo: ${TYPE_LABELS[state.type]}
-Δx = ${result.dx.toFixed(6)}
-Suma = ${result.sum.toFixed(6)}
-${exactValue!==null?'Valor Exacto = '+exactValue.toFixed(6):''}
-${exactValue!==null?'Error = '+Math.abs(result.sum-exactValue).toFixed(6):''}`;
+  const txt=`═══════════════════════════════════════\nRESULTADOS DE SUMA DE RIEMANN\n═══════════════════════════════════════\nFunción: ${getFunctionLabel()}\nIntervalo: [${state.a}, ${state.b}]\nn = ${state.n}\nTipo: ${TYPE_LABELS[state.type]}\nΔx = ${result.dx.toFixed(6)}\nSuma = ${result.sum.toFixed(6)}\n${exactValue!==null?'Valor Exacto = '+exactValue.toFixed(6):''}\n${exactValue!==null?'Error = '+Math.abs(result.sum-exactValue).toFixed(6):''}`;
   const blob=new Blob([txt],{type:'text/plain'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='riemann_results.txt';link.click();
 }
 function toggleHelp(){
